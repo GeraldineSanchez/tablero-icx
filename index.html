@@ -31,7 +31,7 @@
   .ctrl label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
   .ctrl select,.ctrl input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px;font-family:inherit;background:var(--surface);color:var(--ink);min-width:150px}
   .ctrl select:focus,.ctrl input:focus{outline:2px solid var(--orange);outline-offset:-1px}
-  .est-box{display:flex;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+  .est-box{display:flex;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
   .est-box label{display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:500;color:var(--ink);cursor:pointer}
   .proj-panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 16px;margin-bottom:20px}
   .proj-panel summary{cursor:pointer;padding:13px 0;font-weight:700;font-size:13px;list-style:none;display:flex;align-items:center;gap:9px}
@@ -52,10 +52,11 @@
   .sec-title .sub{font-weight:500;letter-spacing:.2px;text-transform:none;color:var(--muted);font-size:12px}
   .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 15px}
-  .card .lbl{font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:7px;line-height:1.25}
+  .card .lbl{font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:4px;line-height:1.25}
   .card .val{font-size:18px;font-weight:750;letter-spacing:-.3px;line-height:1.1;word-break:break-word}
+  .card .prev{font-size:11px;color:var(--muted);margin-top:3px}
   .card.accent{border-left:3px solid var(--orange)}.card.teal{border-left:3px solid var(--teal)}
-  .delta{font-size:11px;font-weight:700;margin-top:6px}.delta.g{color:var(--good)}.delta.b{color:var(--bad)}.delta.flat{color:var(--muted)}
+  .delta{font-size:11px;font-weight:700;margin-top:4px}.delta.g{color:var(--good)}.delta.b{color:var(--bad)}.delta.flat{color:var(--muted)}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media(max-width:880px){.grid2{grid-template-columns:1fr}}
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
   .panel h3{margin:0 0 14px;font-size:14px;font-weight:700}
@@ -68,14 +69,22 @@
   .tbl-scroll{max-height:440px;overflow:auto;border:1px solid var(--line);border-radius:12px}
   .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
   .pill.act{background:#E4F1EE;color:#1F6B5E}.pill.cer{background:#E9EEF4;color:#3A526B}.pill.oth{background:#FBEFE0;color:#9A5A12}
+  /* Semáforo */
+  .sem-header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:14px}
+  .sem-header h4{margin:0;font-size:13px;font-weight:700;flex:1}
+  .sem-header .ctrl{margin:0}
   .sem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
   .sem-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-  .sem-card h4{margin:0 0 4px;font-size:14px;font-weight:700}.sem-card .crit{font-size:11.5px;color:var(--muted);line-height:1.4;margin-bottom:11px;min-height:32px}
+  .sem-card .crit{font-size:11.5px;color:var(--muted);line-height:1.4;margin-bottom:11px}
   .sem-row{display:flex;gap:8px}.sem-chip{flex:1;text-align:center;border-radius:9px;padding:9px 4px}
   .sem-chip .n{font-size:21px;font-weight:750;display:block;line-height:1.1}.sem-chip .t{font-size:10.5px;font-weight:600;opacity:.85}
   .sem-chip.v{background:#E4F1EE;color:#1F6B5E}.sem-chip.a{background:#FCF1DC;color:#956712}.sem-chip.r{background:#FBE6E1;color:#A23522}
   .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:3px}
   .dot.v{background:var(--teal)}.dot.a{background:var(--amber)}.dot.r{background:#D7503A}
+  /* Filtro estado semáforo */
+  .sem-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .sem-filter label{display:flex;align-items:center;gap:4px;font-size:11.5px;cursor:pointer;background:#F7FAFC;border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+  .sem-filter label:has(input:checked){background:var(--navy);color:#fff;border-color:var(--navy)}
   th.sortable{cursor:pointer;user-select:none}th.sortable:hover{color:var(--ink)}th .arr{font-size:9px;margin-left:2px}
   .tbl-search{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;margin-bottom:8px;width:240px;max-width:100%}
   .muted{color:var(--muted)}
@@ -120,48 +129,58 @@
       <div class="proj-list" id="projList"></div>
     </details>
 
+    <!-- KPIs Financieros -->
     <div class="sec-title">KPIs Financieros <span class="sub" id="finNote"></span></div>
     <div class="kpis" id="finKpis"></div>
 
+    <!-- KPIs Operativos -->
     <div class="sec-title">KPIs Operativos <span class="sub" id="opNote"></span></div>
     <div class="kpis" id="opKpis"></div>
 
+    <!-- Semáforo -->
     <div class="sec-title">Semáforo general <span class="sub" id="semNote"></span></div>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px">
+      <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Filtrar por estado:</span>
+      <div class="sem-filter" id="semEstFilter"></div>
+    </div>
     <div class="sem-grid" id="semaforo"></div>
 
-    <div class="sec-title fin">Proyectos finalizados / cerrados <span class="sub" id="finProjNote"></span></div>
-    <input class="tbl-search" id="qFinal" placeholder="Filtrar proyecto…">
-    <div class="tbl-scroll"><table id="tFinal"></table></div>
-
-    <div class="grid2" style="margin-top:18px">
+    <!-- Grid: Proyectos por PM + Tabla de cerrados -->
+    <div class="grid2" style="margin-top:24px">
       <div class="panel"><h3>Proyectos por PM (activos vs cerrados)</h3><div class="chart-wrap"><canvas id="chPM"></canvas></div></div>
-      <div class="panel"><h3>Ventas vs Costo real por mes (hasta el corte)</h3><div class="chart-wrap"><canvas id="chMes"></canvas></div></div>
+      <div class="panel" style="display:flex;flex-direction:column">
+        <h3>Proyectos finalizados / cerrados <span id="finProjNote" style="font-size:11px;font-weight:500;color:var(--muted)"></span></h3>
+        <input class="tbl-search" id="qFinal" placeholder="Filtrar proyecto…" style="margin-bottom:8px">
+        <div style="flex:1;overflow:auto"><table id="tFinal"></table></div>
+      </div>
     </div>
 
+    <!-- Desviación -->
     <div class="sec-title">Desviación por proyecto <span class="sub" id="devNote"></span></div>
     <input class="tbl-search" id="qDev" placeholder="Filtrar proyecto…">
     <div class="tbl-scroll"><table id="tDev"></table></div>
 
+    <!-- Financiero por proyecto -->
     <div class="sec-title">Financiero por proyecto <span class="sub" id="finProjNote2"></span></div>
-    <div class="panel" style="margin-bottom:18px"><h3>Ingresos, costos y rentabilidad por proyecto</h3><div class="chart-wrap" style="height:420px"><canvas id="chFin"></canvas></div></div>
+    <div class="panel" style="margin-bottom:18px"><h3>Ingresos, costos, recaudo y rentabilidad por proyecto</h3><div class="chart-wrap" style="height:420px"><canvas id="chFin"></canvas></div></div>
     <input class="tbl-search" id="qFin" placeholder="Filtrar proyecto…">
     <div class="tbl-scroll"><table id="tFin"></table></div>
 
-    <div class="foot">Réplica de la hoja Dashboard · operativo por fecha de revisión · financiero acumulado al corte · valores en pesos completos · todo se calcula en tu navegador.<br>Para refrescar, vuelve a subir el archivo actualizado.</div>
+    <div class="foot">Tablero ICX · operativo por fecha de revisión · financiero acumulado al corte · valores en pesos completos · todo se calcula en tu navegador · para refrescar sube el archivo actualizado.</div>
   </section>
 </main>
 
 <script>
-const COL={navy:'#0E2841',orange:'#F2901D',amber:'#F4AB04',teal:'#2E8B7F'};
+const COL={navy:'#0E2841',orange:'#F2901D',amber:'#F4AB04',teal:'#2E8B7F',red:'#D7503A',purple:'#7C5CBF'};
 const FINISHED=['finalizado','cerrado'];
 const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const SEM_NAME={v:'Verde',a:'Amarillo',r:'Rojo'},SEM_RANK={v:0,a:1,r:2};
-let DATA=null, charts={}, excluded=new Set(), TBL={};
+let DATA=null,charts={},excluded=new Set(),TBL={},semEstFilter=null;
 function loadExcluded(){try{const s=localStorage.getItem('icx_excluded');if(s)JSON.parse(s).forEach(n=>excluded.add(n));}catch(e){}}
 function saveExcluded(){try{localStorage.setItem('icx_excluded',JSON.stringify([...excluded]));}catch(e){}}
 const norm=s=>s==null?'':String(s).trim();
 const low=s=>norm(s).toLowerCase();
-const isDate=d=>d instanceof Date && !isNaN(d);
+const isDate=d=>d instanceof Date&&!isNaN(d);
 const fmtMoney=v=>'$'+Math.round(v||0).toLocaleString('es-CO');
 const fmtPct=v=>(v==null||isNaN(v))?'—':(v*100).toFixed(1)+'%';
 const fmtDate=d=>isDate(d)?d.toISOString().slice(0,10):'—';
@@ -172,20 +191,17 @@ const esc=s=>String(s==null?'':s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','
 function findCol(h,t){for(let i=0;i<h.length;i++)if(t(low(h[i]),h[i]))return i;return -1;}
 function toDate(v){if(v instanceof Date)return v;if(typeof v==='number')return new Date(Math.round((v-25569)*86400*1000));if(v==null||v==='')return null;const d=new Date(v);return isNaN(d)?null:d;}
 function toNum(v){if(v==null||v==='')return null;if(typeof v==='number')return Math.abs(v)>1.5?v/100:v;const x=parseFloat(String(v).replace(/[%\s]/g,'').replace(',','.'));if(isNaN(x))return null;return Math.abs(x)>1.5?x/100:x;}
-// parser de moneda robusto (maneja números crudos y texto en formato CO o US)
-function money(v){
-  if(v==null||v==='')return 0;
-  if(typeof v==='number')return v;
-  let s=String(v).trim().replace(/[$\s]/g,'');
-  if(s.includes(',')&&s.includes('.')){ s = s.lastIndexOf(',')>s.lastIndexOf('.') ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,''); }
-  else if(s.includes(',')){ const d=s.split(','); s = (d.length===2 && d[1].length<=2) ? s.replace(',','.') : s.replace(/,/g,''); }
-  else if((s.match(/\./g)||[]).length>1){ s=s.replace(/\./g,''); }
-  const x=parseFloat(s); return isNaN(x)?0:x;
-}
-// semáforo desviación: >0 verde (adelantado), 0 a -5% amarillo, <-5% rojo
-function devLight(dv){if(dv==null||isNaN(dv))return null;if(dv>0)return 'v';if(dv>=-0.05)return 'a';return 'r';}
+function money(v){if(v==null||v==='')return 0;if(typeof v==='number')return v;let s=String(v).trim().replace(/[$\s]/g,'');
+  if(s.includes(',')&&s.includes('.')){s=s.lastIndexOf(',')>s.lastIndexOf('.')?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');}
+  else if(s.includes(',')){const d=s.split(',');s=(d.length===2&&d[1].length<=2)?s.replace(',','.'):s.replace(/,/g,'');}
+  else if((s.match(/\./g)||[]).length>1){s=s.replace(/\./g,'');}
+  const x=parseFloat(s);return isNaN(x)?0:x;}
+// Semáforos
+function devLight(dv){if(dv==null||isNaN(dv))return null;if(dv>=0)return 'v';if(dv>=-0.05)return 'a';return 'r';} // >=0% verde · -1% a -5% amarillo · <-5% rojo
 function rentLight(r){if(r==null||isNaN(r))return null;if(r>0.4001)return 'v';if(r<0.3999)return 'r';return 'a';}
 function costLight(real,proj){if(!proj||isNaN(proj))return null;if(real<proj)return 'v';if(real>proj)return 'r';return 'a';}
+// Avance: >80% verde, 60-80% amarillo, <60% rojo
+function avLight(av){if(av==null||isNaN(av))return null;if(av>=0.80)return 'v';if(av>=0.60)return 'a';return 'r';}
 
 function parseWB(wb){
   const fs=n=>wb.SheetNames.find(s=>low(s).includes(n));
@@ -201,9 +217,9 @@ function parseWB(wb){
     dv:findCol(H,h=>h==='% desviación'||h==='%_desviación'||(h.includes('desviaci')&&!h.includes('acum')&&!h.includes('fecha')&&!h.includes('por')&&!h.includes('plan'))),
     dvAcum:findCol(H,h=>h.includes('desviaci')&&h.includes('acum')),est:findCol(H,h=>h==='estado')};
   if(c.proy<0)c.proy=3;
-  const rows={}, flat=[];
+  const rows={},flat=[];
   for(let r=1;r<pp.length;r++){const row=pp[r];if(!row)continue;const p=norm(row[c.proy]);if(!p)continue;
-    const rev=toDate(row[c.rev]); if(!isDate(rev)||rev.getFullYear()<2025)continue; // solo 2025 en adelante
+    const rev=toDate(row[c.rev]);if(!isDate(rev)||rev.getFullYear()<2025)continue;
     const rec={name:p,rev:rev,pm:norm(row[c.pm]),est:norm(row[c.est]),tipo:norm(row[c.tipo]),
       inicio:toDate(row[c.inicio]),finPlan:toDate(row[c.finPlan]),finReal:toDate(row[c.finReal]),
       av:toNum(row[c.av]),dv:toNum(row[c.dv]),dvAcum:toNum(row[c.dvAcum])};
@@ -211,14 +227,14 @@ function parseWB(wb){
   function snap(recs){recs=recs.slice().sort((a,b)=>a.rev-b.rev);const last=recs[recs.length-1];
     const lne=k=>{for(let i=recs.length-1;i>=0;i--)if(norm(recs[i][k])!=='')return recs[i][k];return '';};
     const lfin=k=>{for(let i=recs.length-1;i>=0;i--)if(isDate(recs[i][k]))return recs[i][k];return null;};
-    return {rev:last.rev,pm:norm(lne('pm')),est:norm(lne('est')),tipo:norm(lne('tipo')),inicio:lfin('inicio'),
+    return{rev:last.rev,pm:norm(lne('pm')),est:norm(lne('est')),tipo:norm(lne('tipo')),inicio:lfin('inicio'),
       finPlan:lfin('finPlan'),finReal:lfin('finReal'),av:last.av,dv:last.dv,dvAcum:last.dvAcum};}
   const projects=Object.keys(rows).map(p=>({name:p,...snap(rows[p])}));
   const revDates=[...new Set(flat.map(r=>fmtDate(r.rev)))].sort();
-  // CERRADOS por la última vez que aparecen cerrados/finalizados
+  // Cerrados: última vez que aparecen con ese estado
   const closedMap={};
-  flat.forEach(r=>{if(FINISHED.includes(low(r.est))){const cur=closedMap[r.name];if(!cur||r.rev>cur.rev)closedMap[r.name]=r;}});
-  const closed=Object.values(closedMap).map(r=>({...r}));
+  flat.forEach(r=>{if(FINISHED.includes(low(r.est))){if(!closedMap[r.name]||r.rev>closedMap[r.name].rev)closedMap[r.name]=r;}});
+  const closed=Object.values(closedMap);
   let fin=[];
   if(crN){const cr=XLSX.utils.sheet_to_json(wb.Sheets[crN],{header:1,raw:true,cellDates:true,defval:null});
     const h2=cr[0].map(norm);
@@ -230,12 +246,12 @@ function parseWB(wb){
       pBH:findCol(h2,h=>h.includes('pendiente')&&(h.includes('bh')||h.includes('bolsa'))),pPre:findCol(h2,h=>h.includes('pendiente')&&h.includes('presup')),
       est:findCol(h2,h=>h==='estado')};
     for(let r=1;r<cr.length;r++){const row=cr[r];if(!row)continue;const p=norm(row[f.proy]);if(!p)continue;
-      const a=parseInt(row[f.anio]);if(isNaN(a)||a<2025||a>2026)continue;const mk=monthKey(toDate(row[f.mes]));if(!mk)continue;
-      const estFin=low(norm(row[f.est]));
-      if(!['activo','finalizado'].includes(estFin))continue; // solo activos y finalizados
+      const a=parseInt(row[f.anio]);if(isNaN(a)||a<2025||a>2026)continue;
+      const mk=monthKey(toDate(row[f.mes]));if(!mk)continue;
+      const estFin=low(norm(row[f.est]));if(!['activo','finalizado'].includes(estFin))continue;
       fin.push({anio:a,mk:mk,proy:p,pm:norm(row[f.pm]),ing:money(row[f.ing]),cost:money(row[f.cost]),costProj:money(row[f.costProj]),
         fact:money(row[f.fact]),recau:money(row[f.recau]),pRec:money(row[f.pRec]),pFac:money(row[f.pFac]),pBH:money(row[f.pBH]),pPre:money(row[f.pPre])});}}
-  return {rows:flat,projects,closed,fin,hasFin:fin.length>0,revDates};
+  return{rows:flat,projects,closed,fin,hasFin:fin.length>0,revDates};
 }
 
 function buildFilters(){
@@ -246,24 +262,27 @@ function buildFilters(){
   const pb=document.getElementById('pmBox');pb.innerHTML='';
   pb.insertAdjacentHTML('beforeend',`<label><input type="checkbox" class="pmChk" value="__todos__" checked> <b>Todos</b></label>`);
   pms.forEach(p=>pb.insertAdjacentHTML('beforeend',`<label><input type="checkbox" class="pmChk" value="${esc(p)}" checked> ${esc(p)}</label>`));
-  // lógica "Todos": al marcar Todos, marca/desmarca el resto; al desmarcar uno, desmarca Todos
-  pb.querySelector('[value="__todos__"]').addEventListener('change',function(){
-    pb.querySelectorAll('.pmChk:not([value="__todos__"])').forEach(c=>{c.checked=this.checked;});recompute();});
+  pb.querySelector('[value="__todos__"]').addEventListener('change',function(){pb.querySelectorAll('.pmChk:not([value="__todos__"])').forEach(c=>{c.checked=this.checked;});recompute();});
   pb.querySelectorAll('.pmChk:not([value="__todos__"])').forEach(c=>c.addEventListener('change',()=>{
-    const all=[...pb.querySelectorAll('.pmChk:not([value="__todos__"])')];
-    pb.querySelector('[value="__todos__"]').checked=all.every(x=>x.checked);recompute();}));
+    const all=[...pb.querySelectorAll('.pmChk:not([value="__todos__"])')];pb.querySelector('[value="__todos__"]').checked=all.every(x=>x.checked);recompute();}));
   const fr=document.getElementById('fRev');fr.innerHTML='';fr.add(new Option('Última revisión por proyecto','last'));
   DATA.revDates.slice().reverse().forEach(d=>fr.add(new Option(dmy(d),d)));
   if(DATA.revDates.length)fr.value=DATA.revDates[DATA.revDates.length-1];
   const ests=[...new Set(DATA.rows.map(p=>p.est).filter(x=>x))].sort();
   const eb=document.getElementById('estBox');eb.innerHTML='';
   ests.forEach(e=>eb.insertAdjacentHTML('beforeend',`<label><input type="checkbox" class="estChk" value="${low(e)}" checked> ${esc(e)}</label>`));
+  // filtro estado semáforo
+  const sef=document.getElementById('semEstFilter');sef.innerHTML='';
+  sef.insertAdjacentHTML('beforeend',`<label><input type="radio" name="semEst" value="__todos__" checked> Todos</label>`);
+  ests.forEach(e=>sef.insertAdjacentHTML('beforeend',`<label><input type="radio" name="semEst" value="${low(e)}"> ${esc(e)}</label>`));
+  sef.querySelectorAll('input[name="semEst"]').forEach(r=>r.addEventListener('change',e=>{semEstFilter=e.target.value==='__todos__'?null:e.target.value;recompute();}));
   ['fCut','fRev'].forEach(id=>document.getElementById(id).addEventListener('change',recompute));
   document.querySelectorAll('.estChk').forEach(c=>c.addEventListener('change',recompute));
   ['qDev','qFin','qFinal'].forEach(id=>document.getElementById(id).addEventListener('input',e=>{
     const map={qDev:'tDev',qFin:'tFin',qFinal:'tFinal'};const t=TBL[map[id]];if(t){t.q=low(e.target.value);renderTable(map[id]);}}));
   loadExcluded();buildProjList();
 }
+
 function buildProjList(){
   const opN=new Set(DATA.projects.map(p=>p.name)),finN=new Set(DATA.fin.map(r=>r.proy));
   const all=[...new Set([...opN,...finN])].sort((a,b)=>a.localeCompare(b,'es'));
@@ -273,8 +292,8 @@ function buildProjList(){
   box.querySelectorAll('.projChk').forEach(c=>c.addEventListener('change',()=>{
     if(c.checked)excluded.delete(c.value);else excluded.add(c.value);
     c.closest('label').classList.toggle('excl',!c.checked);saveExcluded();updateExcl();recompute();}));
-  const search=document.getElementById('projSearch');search.value='';
-  search.oninput=e=>{const q=low(e.target.value);document.querySelectorAll('#projList label').forEach(l=>{l.style.display=low(l.dataset.name).includes(q)?'':'none';});};
+  const srch=document.getElementById('projSearch');srch.value='';
+  srch.oninput=e=>{const q=low(e.target.value);document.querySelectorAll('#projList label').forEach(l=>{l.style.display=low(l.dataset.name).includes(q)?'':'none';});};
   updateExcl();
 }
 function updateExcl(){const n=excluded.size;document.getElementById('exclCount').innerHTML=n?`<span class="badge">${n} excluido${n>1?'s':''}</span>`:'';}
@@ -288,46 +307,83 @@ function recompute(){
   const ests=new Set([...document.querySelectorAll('.estChk:checked')].map(c=>c.value));
   const selPMs=new Set([...document.querySelectorAll('.pmChk:not([value="__todos__"]):checked')].map(c=>c.value));
   const pmOk=v=>selPMs.size===0||selPMs.has(v);
-  const pmLabel=selPMs.size===0||selPMs.size===(document.querySelectorAll('.pmChk:not([value="__todos__"])').length)?'Todos':([...selPMs].join(', '));
+  const nPMtotal=document.querySelectorAll('.pmChk:not([value="__todos__"])').length;
+  const pmLabel=selPMs.size===0||selPMs.size===nPMtotal?'Todos':[...selPMs].join(', ');
 
-  // ===== Operativo: según la fecha de revisión elegida =====
-  const opBase = selRev==='last' ? DATA.projects : DATA.rows.filter(r=>fmtDate(r.rev)===selRev);
+  // Mes de corte anterior para comparación
+  const [cy,cm]=cut.split('-').map(Number);
+  const pd=new Date(cy,cm-2,1),prevMK=pd.getFullYear()+'-'+String(pd.getMonth()+1).padStart(2,'0');
+
+  // ── OPERATIVO ──
+  const opBase=selRev==='last'?DATA.projects:DATA.rows.filter(r=>fmtDate(r.rev)===selRev);
   const filt=opBase.filter(p=>pmOk(p.pm)&&ests.has(low(p.est))&&!excluded.has(p.name));
+  // corte anterior operativo (última fecha anterior a selRev en las revDates)
+  let prevRevRows=[];
+  if(selRev!=='last'){
+    const prevRevDate=DATA.revDates.filter(d=>d<selRev).slice(-1)[0];
+    if(prevRevDate)prevRevRows=DATA.rows.filter(r=>fmtDate(r.rev)===prevRevDate&&pmOk(r.pm)&&ests.has(low(r.est))&&!excluded.has(r.name));
+  }
   const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
   const nAct=filt.filter(p=>low(p.est)==='activo').length;
-  // CERRADOS: por última vez que aparecen cerrados (independiente de la fecha)
   const closed=DATA.closed.filter(p=>pmOk(p.pm)&&!excluded.has(p.name));
+  const promAv=avg(filt.map(p=>p.av).filter(v=>v!=null));
+  const promDv=avg(filt.map(p=>p.dv).filter(v=>v!=null));
+  const prevPromAv=prevRevRows.length?avg(prevRevRows.map(p=>p.av).filter(v=>v!=null)):null;
+  const prevPromDv=prevRevRows.length?avg(prevRevRows.map(p=>p.dv).filter(v=>v!=null)):null;
+  const prevAct=prevRevRows.filter(p=>low(p.est)==='activo').length||null;
+
   document.getElementById('opNote').textContent='('+(selRev==='last'?'última revisión por proyecto':'revisión '+dmy(selRev))+(pmLabel!=='Todos'?` · PM: ${pmLabel}`:'')+')';
   const ok=document.getElementById('opKpis');ok.innerHTML='';
-  card(ok,'Número de proyectos',filt.length,'accent');
-  card(ok,'Prom Avance',fmtPct(avg(filt.map(p=>p.av).filter(v=>v!=null))));
-  card(ok,'Prom Desviación',fmtPct(avg(filt.map(p=>p.dv).filter(v=>v!=null))));
-  card(ok,'Activos (en la fecha)',nAct,'teal');
-  card(ok,'Finalizados / Cerrados',closed.length);
+  cardCmp(ok,'Número de proyectos',filt.length,prevRevRows.length||null,true,'accent');
+  cardCmp(ok,'Activos',nAct,prevAct,true,'teal');
+  cardCmp(ok,'Finalizados / Cerrados',closed.length,null,false);
+  cardCmp(ok,'Prom Avance',fmtPct(promAv),null,false,'',promAv,prevPromAv,'pct');
+  cardCmp(ok,'Prom Desviación',fmtPct(promDv),null,false,'',promDv,prevPromDv,'pct');
+  // KPI extra: proyectos en rojo (desviación < -5%)
+  const enRojo=filt.filter(p=>p.dv!=null&&p.dv<-0.05).length;
+  const prevEnRojo=prevRevRows.filter(p=>p.dv!=null&&p.dv<-0.05).length;
+  cardCmp(ok,'En rojo (desv. <−5%)',enRojo,prevRevRows.length?prevEnRojo:null,false);
+  // KPI extra: proyectos retrasados (dv < 0)
+  const retrasados=filt.filter(p=>p.dv!=null&&p.dv<0).length;
+  cardCmp(ok,'Retrasados (desv. <0)',retrasados,prevRevRows.length?prevRevRows.filter(p=>p.dv!=null&&p.dv<0).length:null,false);
 
-  const devC={v:0,a:0,r:0,n:0};filt.forEach(p=>{const L=devLight(p.dv);if(L)devC[L]++;else devC.n++;});
-  const semDev=semCard('Desviación de proyectos','Verde &gt;0% (adelantado) · Amarillo 0% a −5% · Rojo &lt;−5%',devC);
+  // ── SEMÁFORO con filtro de estado ──
+  const semBase=semEstFilter?filt.filter(p=>low(p.est)===semEstFilter):filt;
+  const devC={v:0,a:0,r:0},avC={v:0,a:0,r:0};
+  semBase.forEach(p=>{const L=devLight(p.dv);if(L)devC[L]++;});
+  semBase.forEach(p=>{const L=avLight(p.av);if(L)avC[L]++;});
+  const frAll=DATA.fin.filter(r=>pmOk(r.pm)&&!excluded.has(r.proy));
+  const fr=frAll.filter(r=>r.mk<=cut);
+  const pj={};fr.forEach(r=>{(pj[r.proy]=pj[r.proy]||{proy:r.proy,ing:0,cost:0,costProj:0,fact:0,recau:0});
+    pj[r.proy].ing+=r.ing;pj[r.proy].cost+=r.cost;pj[r.proy].costProj+=r.costProj;pj[r.proy].fact+=r.fact;pj[r.proy].recau+=r.recau;});
+  const pjArr=Object.values(pj).map(p=>({...p,rent:p.ing?(p.ing-p.cost)/p.ing:null})).sort((a,b)=>b.ing-a.ing);
+  const rentC={v:0,a:0,r:0},costC={v:0,a:0,r:0};
+  pjArr.forEach(p=>{const rL=rentLight(p.rent);if(rL)rentC[rL]++;const cL=costLight(p.cost,p.costProj);if(cL)costC[cL]++;});
+  const semLabel=semEstFilter?`· estado: ${semEstFilter}`:'';
+  document.getElementById('semNote').textContent=`(${semBase.length} proy. operativo ${semLabel} · ${pjArr.length} proy. financiero a ${mkLabel(cut)})`;
+  document.getElementById('semaforo').innerHTML=
+    semCard('Desviación','Verde &gt;0% (adelantado) · Amarillo 0% a −5% · Rojo &lt;−5%',devC)+
+    semCard('Avance','Verde ≥80% · Amarillo 60–80% · Rojo &lt;60%',avC)+
+    semCard('Rentabilidad','Verde &gt;40% · Amarillo =40% · Rojo &lt;40%',rentC)+
+    semCard('Costos vs presupuesto','Verde bajo lo proyectado · Amarillo igual · Rojo por encima',costC);
 
-  // proyectos finalizados/cerrados (por última vez cerrados)
-  document.getElementById('finProjNote').textContent=`(${closed.length} · por la última vez que aparecen Cerrado/Finalizado · no depende de la fecha)`;
+  // ── TABLA CERRADOS (en el grid2) ──
+  document.getElementById('finProjNote').textContent=`(${closed.length})`;
   buildTable('tFinal',[
     {k:'name',t:'Proyecto',s:1,fmt:v=>`<b>${esc(v)}</b>`},{k:'pm',t:'PM',s:1},
-    {k:'tipo',t:'Tipo',s:1,fmt:v=>`<span class="muted">${esc(v)}</span>`},
-    {k:'finReal',t:'Fin Real',fmt:v=>fmtDate(v)},{k:'rev',t:'Últ. rev. cerrado',fmt:v=>fmtDate(v)},
-    {k:'av',t:'% Avance',n:1,fmt:v=>fmtPct(v)},{k:'dv',t:'% Desviación',n:1,fmt:v=>fmtPct(v)},
-    {k:'est',t:'Estado',s:1,fmt:v=>`<span class="pill cer">${esc(v)}</span>`}
+    {k:'rev',t:'Últ. cerrado',fmt:v=>fmtDate(v)},{k:'av',t:'Avance',n:1,fmt:v=>fmtPct(v)},
+    {k:'dv',t:'Desviación',n:1,fmt:v=>fmtPct(v)},{k:'est',t:'Estado',s:1,fmt:v=>`<span class="pill cer">${esc(v)}</span>`}
   ],closed,'rev','desc');
 
-  // por PM (en la fecha elegida): activos vs cerrados(últ. vez cerrados)
+  // ── GRÁFICO POR PM ──
   const pmMap={};
-  opBase.filter(p=>!excluded.has(p.name)&&low(p.est)==='activo').forEach(p=>{const k=p.pm||'(sin PM)';(pmMap[k]=pmMap[k]||{act:0,cer:0}).act++;});
-  closed.forEach(p=>{const k=p.pm||'(sin PM)';(pmMap[k]=pmMap[k]||{act:0,cer:0}).cer++;});
+  opBase.filter(p=>!excluded.has(p.name)&&low(p.est)==='activo').forEach(p=>{const k=p.pm||'—';(pmMap[k]=pmMap[k]||{act:0,cer:0}).act++;});
+  closed.forEach(p=>{const k=p.pm||'—';(pmMap[k]=pmMap[k]||{act:0,cer:0}).cer++;});
   const pmN=Object.keys(pmMap).filter(k=>pmMap[k].act+pmMap[k].cer>0).sort((a,b)=>(pmMap[b].act+pmMap[b].cer)-(pmMap[a].act+pmMap[a].cer));
-  drawBar('chPM',pmN,[{label:'Activos',data:pmN.map(n=>pmMap[n].act),backgroundColor:COL.teal},{label:'Finalizados/Cerrados',data:pmN.map(n=>pmMap[n].cer),backgroundColor:COL.navy}]);
+  drawBar('chPM',pmN,[{label:'Activos',data:pmN.map(n=>pmMap[n].act),backgroundColor:COL.teal},{label:'Cerrados',data:pmN.map(n=>pmMap[n].cer),backgroundColor:COL.navy}]);
 
-  // desviación por proyecto (en la fecha)
-  document.getElementById('devNote').textContent=`(${filt.length} proyectos · clic en encabezado para ordenar · buscador abajo)`;
-  const devRows=filt.map(p=>{const L=devLight(p.dv);return {...p,_sem:L,_semR:L==null?-1:SEM_RANK[L]};});
+  // ── DESVIACIÓN ──
+  document.getElementById('devNote').textContent=`(${filt.length} proyectos · clic en encabezado para ordenar)`;
   buildTable('tDev',[
     {k:'name',t:'Proyecto',s:1,fmt:v=>`<b>${esc(v)}</b>`},{k:'pm',t:'PM',s:1},
     {k:'est',t:'Estado',s:1,fmt:v=>`<span class="pill ${low(v)==='activo'?'act':(FINISHED.includes(low(v))?'cer':'oth')}">${esc(v)}</span>`},
@@ -337,19 +393,14 @@ function recompute(){
     {k:'av',t:'% Avance',n:1,fmt:v=>fmtPct(v)},{k:'dv',t:'% Desviación',n:1,fmt:v=>fmtPct(v)},
     {k:'dvAcum',t:'Desv. Acumulada',n:1,fmt:v=>fmtPct(v)},
     {k:'_semR',t:'Semáforo',n:1,fmt:(v,r)=>r._sem?`<span class="dot ${r._sem}"></span>${SEM_NAME[r._sem]}`:'—'}
-  ],devRows,'dv','desc');
+  ],filt.map(p=>{const L=devLight(p.dv);return{...p,_sem:L,_semR:L==null?-1:SEM_RANK[L]};}),'dv','desc');
 
-  // ===== Financiero: PM + acumulado hasta el corte =====
+  // ── FINANCIERO ──
   const fnNote=document.getElementById('finNote'),fk=document.getElementById('finKpis');fk.innerHTML='';
-  if(!DATA.hasFin){fnNote.textContent='(sin hoja financiera)';fk.innerHTML='<div class="card"><div class="lbl">Sin datos</div><div class="val" style="font-size:14px">No se encontró Costo_Rentabilidad Real</div></div>';
-    clear('chMes');clear('chFin');TBL['tFin']=null;document.getElementById('tFin').innerHTML='';
-    document.getElementById('semaforo').innerHTML=semDev;document.getElementById('semNote').textContent='(solo desviación · sin hoja financiera)';return;}
+  if(!DATA.hasFin){fnNote.textContent='(sin hoja financiera)';fk.innerHTML='<div class="card"><div class="lbl">Sin datos</div></div>';
+    clear('chFin');TBL['tFin']=null;document.getElementById('tFin').innerHTML='';return;}
   fnNote.textContent=`(acumulado a ${mkLabel(cut)}${pmLabel!=='Todos'?' · PM: '+pmLabel:''})`;
-  const frAll=DATA.fin.filter(r=>pmOk(r.pm)&&!excluded.has(r.proy));
-  const fr=frAll.filter(r=>r.mk<=cut);
   const S=k=>fr.reduce((x,r)=>x+(r[k]||0),0);
-  const [cy,cm]=cut.split('-').map(Number);
-  const pd=new Date(cy,cm-2,1), prevMK=pd.getFullYear()+'-'+String(pd.getMonth()+1).padStart(2,'0');
   const msum=(mk,k)=>frAll.reduce((s,r)=>s+(r.mk===mk?(r[k]||0):0),0);
   const ventas=S('ing'),costos=S('cost'),gan=ventas-costos;
   cardD(fk,'Total Ventas',fmtMoney(ventas),msum(cut,'ing'),msum(prevMK,'ing'),true,'accent');
@@ -360,49 +411,52 @@ function recompute(){
   cardD(fk,'Total Recaudado',fmtMoney(S('recau')),msum(cut,'recau'),msum(prevMK,'recau'),true);
   card(fk,'Pend. por Facturar',fmtMoney(S('pFac')));card(fk,'Pend. por Recaudar',fmtMoney(S('pRec')));
   card(fk,'Pend. Ejecutar BH',fmtMoney(S('pBH')));card(fk,'Pend. Presupuesto',fmtMoney(S('pPre')));
+  // KPI extra financiero: % Recaudo sobre facturado
+  const fact=S('fact'),recau=S('recau');
+  const pctRecaudo=fact>0?recau/fact:null;
+  card(fk,'% Recaudo / Facturado',pctRecaudo!=null?fmtPct(pctRecaudo):'—');
 
-  const mset=[...new Set(fr.map(r=>r.mk))].sort();
-  drawBar('chMes',mset.map(mkLabel),[
-    {label:'Ventas',data:mset.map(m=>Math.round(msum(m,'ing'))),backgroundColor:COL.orange},
-    {label:'Costo real',data:mset.map(m=>Math.round(msum(m,'cost'))),backgroundColor:COL.navy}],{money:true});
-
-  const pj={};fr.forEach(r=>{(pj[r.proy]=pj[r.proy]||{proy:r.proy,ing:0,cost:0,costProj:0,fact:0,recau:0});
-    pj[r.proy].ing+=r.ing;pj[r.proy].cost+=r.cost;pj[r.proy].costProj+=r.costProj;pj[r.proy].fact+=r.fact;pj[r.proy].recau+=r.recau;});
-  const pjArr=Object.values(pj).map(p=>({...p,rent:p.ing?(p.ing-p.cost)/p.ing:null})).sort((a,b)=>b.ing-a.ing);
-  const top=pjArr; // mostrar todos (sin límite de top 12)
-  drawCombo('chFin',top.map(p=>p.proy),
-    [{label:'Ingresos',data:top.map(p=>Math.round(p.ing)),color:COL.orange},
-     {label:'Costos',data:top.map(p=>Math.round(p.cost)),color:COL.navy},
-     {label:'Facturado',data:top.map(p=>Math.round(p.fact)),color:COL.teal}],
-    top.map(p=>p.rent), top.map(()=>0.4));
+  // Gráfico: combo con recaudo añadido
   document.getElementById('finProjNote2').textContent=`(acumulado a ${mkLabel(cut)} · ${pjArr.length} proyectos · clic en encabezado para ordenar)`;
-  buildTable('tFin',[
-    {k:'proy',t:'Proyecto',s:1},{k:'ing',t:'Ingresos',n:1,fmt:v=>fmtMoney(v)},{k:'cost',t:'Costos',n:1,fmt:v=>fmtMoney(v)},
-    {k:'rent',t:'Rentab.',n:1,fmt:v=>{const L=rentLight(v);return (L?`<span class="dot ${L}"></span>`:'')+(v==null?'—':fmtPct(v));}},
-    {k:'fact',t:'Facturado',n:1,fmt:v=>fmtMoney(v)},{k:'recau',t:'Recaudado',n:1,fmt:v=>fmtMoney(v)}
-  ],pjArr,'ing','desc');
+  drawCombo('chFin',pjArr.map(p=>p.proy),
+    [{label:'Ingresos',data:pjArr.map(p=>Math.round(p.ing)),color:COL.orange},
+     {label:'Costos',data:pjArr.map(p=>Math.round(p.cost)),color:COL.navy},
+     {label:'Facturado',data:pjArr.map(p=>Math.round(p.fact)),color:COL.teal},
+     {label:'Recaudado',data:pjArr.map(p=>Math.round(p.recau)),color:COL.amber}],
+    pjArr.map(p=>p.rent),pjArr.map(()=>0.4));
 
-  const rentC={v:0,a:0,r:0,n:0},costC={v:0,a:0,r:0,n:0};
-  pjArr.forEach(p=>{const rL=rentLight(p.rent);if(rL)rentC[rL]++;else rentC.n++;const cL=costLight(p.cost,p.costProj);if(cL)costC[cL]++;else costC.n++;});
-  document.getElementById('semaforo').innerHTML=semDev
-    +semCard('Rentabilidad','Verde &gt;40% · Amarillo =40% · Rojo &lt;40%',rentC)
-    +semCard('Costos vs presupuesto','Verde bajo lo proyectado · Amarillo igual · Rojo por encima',costC);
-  document.getElementById('semNote').textContent=`(desviación: ${filt.length} proy. · financiero: ${pjArr.length} proy. a ${mkLabel(cut)}${pmLabel!=='Todos'?' · PM: '+pmLabel:''})`;
+  buildTable('tFin',[
+    {k:'proy',t:'Proyecto',s:1},{k:'ing',t:'Ingresos',n:1,fmt:v=>fmtMoney(v)},
+    {k:'cost',t:'Costos',n:1,fmt:v=>fmtMoney(v)},
+    {k:'rent',t:'Rentab.',n:1,fmt:v=>{const L=rentLight(v);return(L?`<span class="dot ${L}"></span>`:'')+(v==null?'—':fmtPct(v));}},
+    {k:'fact',t:'Facturado',n:1,fmt:v=>fmtMoney(v)},{k:'recau',t:'Recaudado',n:1,fmt:v=>fmtMoney(v)},
+    {k:'_pctRec',t:'% Recaudo',n:1,fmt:v=>v==null?'—':fmtPct(v)}
+  ],pjArr.map(p=>({...p,_pctRec:p.fact>0?p.recau/p.fact:null})),'ing','desc');
 }
 
+// ── UI helpers ──
 function card(box,lbl,val,cls=''){box.insertAdjacentHTML('beforeend',`<div class="card ${cls}"><div class="lbl">${lbl}</div><div class="val">${val}</div></div>`);}
 function deltaHtml(cur,prev,goodUp){
-  if(prev==null||prev===0)return (cur>0?`<div class="delta flat">— sin mes anterior</div>`:'');
-  const ch=(cur-prev)/prev, up=ch>=0, good=goodUp?up:!up;
-  return `<div class="delta ${Math.abs(ch)<0.0005?'flat':(good?'g':'b')}">${up?'▲':'▼'} ${Math.abs(ch*100).toFixed(1)}% vs mes anterior</div>`;}
-function cardD(box,lbl,val,cur,prev,goodUp,cls=''){box.insertAdjacentHTML('beforeend',`<div class="card ${cls}"><div class="lbl">${lbl}</div><div class="val">${val}</div>${deltaHtml(cur,prev,goodUp)}</div>`);}
+  if(prev==null||prev===0)return'';const ch=(cur-prev)/prev,up=ch>=0,good=goodUp?up:!up;
+  return`<div class="delta ${Math.abs(ch)<0.0005?'flat':(good?'g':'b')}">${up?'▲':'▼'} ${Math.abs(ch*100).toFixed(1)}% vs corte ant.</div>`;}
+function cardD(box,lbl,val,cur,prev,goodUp,cls=''){
+  box.insertAdjacentHTML('beforeend',`<div class="card ${cls}"><div class="lbl">${lbl}</div><div class="val">${val}</div>${deltaHtml(cur,prev,goodUp)}</div>`);}
+function cardCmp(box,lbl,val,prev,goodUp,cls='',rawVal=null,rawPrev=null,mode=''){
+  let d='';
+  if(mode==='pct'&&rawVal!=null&&rawPrev!=null){const dp=(rawVal-rawPrev)*100,up=dp>=0,good=goodUp?up:!up;
+    if(Math.abs(dp)>0.001)d=`<div class="delta ${good?'g':'b'}">${up?'▲':'▼'} ${Math.abs(dp).toFixed(1)} pp vs rev. ant.</div>`;}
+  else if(prev!=null&&prev!==0){const ch=(val-prev)/prev,up=ch>=0,good=goodUp?up:!up;
+    if(Math.abs(ch)>0.001)d=`<div class="delta ${good?'g':'b'}">${up?'▲':'▼'} ${Math.abs(ch*100).toFixed(1)}% vs rev. ant.</div>`;}
+  if(prev!=null)d+=`<div class="prev">Ant: ${typeof val==='number'?prev:prev}</div>`;
+  box.insertAdjacentHTML('beforeend',`<div class="card ${cls}"><div class="lbl">${lbl}</div><div class="val">${val}</div>${d}</div>`);}
 function cardRent(box,rentCum,cut,prevMK,msum){
   const cv=msum(cut,'ing'),cc=msum(cut,'cost'),pv=msum(prevMK,'ing'),pc=msum(prevMK,'cost');
-  const cr=cv?(cv-cc)/cv:null, pr=pv?(pv-pc)/pv:null;let d='';
-  if(cr!=null&&pr!=null){const dp=(cr-pr)*100,up=dp>=0;d=`<div class="delta ${Math.abs(dp)<0.05?'flat':(up?'g':'b')}">${up?'▲':'▼'} ${Math.abs(dp).toFixed(1)} pp vs mes anterior</div>`;}
+  const cr=cv?(cv-cc)/cv:null,pr=pv?(pv-pc)/pv:null;let d='';
+  if(cr!=null&&pr!=null){const dp=(cr-pr)*100,up=dp>=0;d=`<div class="delta ${Math.abs(dp)<0.05?'flat':(up?'g':'b')}">${up?'▲':'▼'} ${Math.abs(dp).toFixed(1)} pp vs corte ant.</div>`;}
   box.insertAdjacentHTML('beforeend',`<div class="card"><div class="lbl">% Rentabilidad</div><div class="val">${fmtPct(rentCum)}</div>${d}</div>`);}
-function semCard(title,crit,c){return `<div class="sem-card"><h4>${title}</h4><div class="crit">${crit}</div><div class="sem-row"><div class="sem-chip v"><span class="n">${c.v}</span><span class="t">Verde</span></div><div class="sem-chip a"><span class="n">${c.a}</span><span class="t">Amarillo</span></div><div class="sem-chip r"><span class="n">${c.r}</span><span class="t">Rojo</span></div></div></div>`;}
+function semCard(title,crit,c){return`<div class="sem-card"><div class="sem-header"><h4>${title}</h4></div><div class="crit">${crit}</div><div class="sem-row"><div class="sem-chip v"><span class="n">${c.v}</span><span class="t">Verde</span></div><div class="sem-chip a"><span class="n">${c.a}</span><span class="t">Amarillo</span></div><div class="sem-chip r"><span class="n">${c.r}</span><span class="t">Rojo</span></div></div></div>`;}
 
+// ── Tablas ordenables ──
 function buildTable(id,cols,rows,col,dir){const prev=TBL[id];TBL[id]={cols,rows,col:prev?prev.col:col,dir:prev?prev.dir:(dir||'desc'),q:prev?prev.q:''};renderTable(id);}
 function renderTable(id){const t=TBL[id];if(!t)return;const sign=t.dir==='asc'?1:-1;
   let rows=t.rows;
@@ -415,16 +469,17 @@ function renderTable(id){const t=TBL[id];if(!t)return;const sign=t.dir==='asc'?1
   const head='<thead><tr>'+t.cols.map(c=>`<th class="${c.n?'n ':''}sortable" onclick="sortTable('${id}','${c.k}')">${c.t}<span class="arr">${t.col===c.k?(t.dir==='asc'?'▲':'▼'):''}</span></th>`).join('')+'</tr></thead>';
   const body='<tbody>'+(rows.length?rows.map(r=>'<tr>'+t.cols.map(c=>`<td class="${c.n?'n':''}">${c.fmt?c.fmt(r[c.k],r):esc(r[c.k]==null?'':r[c.k])}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${t.cols.length}" class="muted" style="padding:16px">Sin datos para este filtro.</td></tr>`)+'</tbody>';
   document.getElementById(id).innerHTML=head+body;}
-function sortTable(id,col){const t=TBL[id];if(!t)return;if(t.col===col)t.dir=t.dir==='asc'?'desc':'asc';else{t.col=col;t.dir=((t.cols.find(c=>c.k===col)||{}).s)?'asc':'desc';}renderTable(id);}
+function sortTable(id,col){const t=TBL[id];if(!t)return;if(t.col===col)t.dir=t.dir==='asc'?'desc':'asc';else{t.col=col;t.dir=(t.cols.find(c=>c.k===col)||{}).s?'asc':'desc';}renderTable(id);}
 
+// ── Charts ──
 function clear(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
-function drawBar(id,labels,datasets,opt={}){clear(id);const money=!!opt.money;const ctx=document.getElementById(id).getContext('2d');
+function drawBar(id,labels,datasets){clear(id);const ctx=document.getElementById(id).getContext('2d');
   charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(money?fmtMoney(c.raw):c.raw)}}},
-    scales:{x:{ticks:{font:{size:10},maxRotation:60}},y:{ticks:{font:{size:9},maxTicksLimit:7,callback:v=>money?fmtMoney(v):v}}}}});}
+    plugins:{legend:{labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw}}},
+    scales:{x:{ticks:{font:{size:10},maxRotation:60}},y:{ticks:{font:{size:9}}}}}});}
 function drawCombo(id,labels,bars,rentab,meta){clear(id);const ctx=document.getElementById(id).getContext('2d');
   const ds=bars.map(b=>({type:'bar',label:b.label,data:b.data,backgroundColor:b.color,yAxisID:'y',order:2}));
-  ds.push({type:'line',label:'Rentabilidad',data:rentab,borderColor:'#D7503A',backgroundColor:'#D7503A',yAxisID:'y1',tension:.3,pointRadius:3,pointHoverRadius:5,borderWidth:2,order:0,spanGaps:true});
+  ds.push({type:'line',label:'Rentabilidad',data:rentab,borderColor:COL.red,backgroundColor:COL.red,yAxisID:'y1',tension:.3,pointRadius:3,pointHoverRadius:5,borderWidth:2,order:0,spanGaps:true});
   ds.push({type:'line',label:'Meta 40%',data:meta,borderColor:'#94A3B8',borderDash:[6,4],yAxisID:'y1',pointRadius:0,borderWidth:1.5,order:1});
   charts[id]=new Chart(ctx,{data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.yAxisID==='y1'?c.dataset.label+': '+fmtPct(c.raw):c.dataset.label+': '+fmtMoney(c.raw)}}},
@@ -432,7 +487,7 @@ function drawCombo(id,labels,bars,rentab,meta){clear(id);const ctx=document.getE
       y1:{position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:9},callback:v=>(v*100).toFixed(0)+'%'}}}}});}
 
 function handleFile(file){const rd=new FileReader();rd.onload=e=>{try{
-  const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});DATA=parseWB(wb);TBL={};
+  const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});DATA=parseWB(wb);TBL={};semEstFilter=null;
   document.getElementById('empty').classList.add('hidden');document.getElementById('dash').classList.remove('hidden');
   buildFilters();recompute();window.scrollTo(0,0);
 }catch(err){alert('No pude leer el archivo: '+err.message);console.error(err);}};rd.readAsArrayBuffer(file);}
@@ -443,4 +498,4 @@ const drop=document.getElementById('drop');
 drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
 </script>
 </body>
-</html>
+  
