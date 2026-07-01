@@ -215,20 +215,20 @@ function parseWB(wb){
     finPlan:findCol(H,h=>h.includes('fin planificado')),finReal:findCol(H,h=>h.includes('fin real')),
     av:findCol(H,h=>h.includes('avance')&&h.includes('proyecto')),
     dv:findCol(H,h=>h==='% desviación'||h==='%_desviación'||(h.includes('desviaci')&&!h.includes('acum')&&!h.includes('fecha')&&!h.includes('por')&&!h.includes('plan'))),
-    dvAcum:findCol(H,h=>h.includes('desviaci')&&h.includes('acum')),est:findCol(H,h=>h==='estado')};
+    dvAcum:findCol(H,h=>h.includes('desviaci')&&h.includes('acum')),finDev:findCol(H,h=>h.includes('fecha')&&h.includes('fin')&&h.includes('desviaci')),est:findCol(H,h=>h==='estado')};
   if(c.proy<0)c.proy=3;
   const rows={},flat=[];
   for(let r=1;r<pp.length;r++){const row=pp[r];if(!row)continue;const p=norm(row[c.proy]);if(!p)continue;
     const rev=toDate(row[c.rev]);if(!isDate(rev)||rev.getFullYear()<2025)continue;
     const rec={name:p,rev:rev,pm:norm(row[c.pm]),est:norm(row[c.est]),tipo:norm(row[c.tipo]),
       inicio:toDate(row[c.inicio]),finPlan:toDate(row[c.finPlan]),finReal:toDate(row[c.finReal]),
-      av:toNum(row[c.av]),dv:toNum(row[c.dv]),dvAcum:toNum(row[c.dvAcum])};
+      av:toNum(row[c.av]),dv:toNum(row[c.dv]),dvAcum:toNum(row[c.dvAcum]),finDev:toDate(row[c.finDev])};
     flat.push(rec);(rows[p]=rows[p]||[]).push(rec);}
   function snap(recs){recs=recs.slice().sort((a,b)=>a.rev-b.rev);const last=recs[recs.length-1];
     const lne=k=>{for(let i=recs.length-1;i>=0;i--)if(norm(recs[i][k])!=='')return recs[i][k];return '';};
     const lfin=k=>{for(let i=recs.length-1;i>=0;i--)if(isDate(recs[i][k]))return recs[i][k];return null;};
     return{rev:last.rev,pm:norm(lne('pm')),est:norm(lne('est')),tipo:norm(lne('tipo')),inicio:lfin('inicio'),
-      finPlan:lfin('finPlan'),finReal:lfin('finReal'),av:last.av,dv:last.dv,dvAcum:last.dvAcum};}
+      finPlan:lfin('finPlan'),finReal:lfin('finReal'),finDev:lfin('finDev'),av:last.av,dv:last.dv,dvAcum:last.dvAcum};}
   const projects=Object.keys(rows).map(p=>({name:p,...snap(rows[p])}));
   const revDates=[...new Set(flat.map(r=>fmtDate(r.rev)))].sort();
   // Cerrados: última vez que aparecen con ese estado
@@ -357,15 +357,14 @@ function recompute(){
   const pj={};fr.forEach(r=>{(pj[r.proy]=pj[r.proy]||{proy:r.proy,ing:0,cost:0,costProj:0,fact:0,recau:0});
     pj[r.proy].ing+=r.ing;pj[r.proy].cost+=r.cost;pj[r.proy].costProj+=r.costProj;pj[r.proy].fact+=r.fact;pj[r.proy].recau+=r.recau;});
   const pjArr=Object.values(pj).map(p=>({...p,rent:p.ing?(p.ing-p.cost)/p.ing:null})).sort((a,b)=>b.ing-a.ing);
-  const rentC={v:0,a:0,r:0},costC={v:0,a:0,r:0};
-  pjArr.forEach(p=>{const rL=rentLight(p.rent);if(rL)rentC[rL]++;const cL=costLight(p.cost,p.costProj);if(cL)costC[cL]++;});
+  const rentC={v:0,a:0,r:0};
+  pjArr.forEach(p=>{const rL=rentLight(p.rent);if(rL)rentC[rL]++;});
   const semLabel=semEstFilter?`· estado: ${semEstFilter}`:'';
   document.getElementById('semNote').textContent=`(${semBase.length} proy. operativo ${semLabel} · ${pjArr.length} proy. financiero a ${mkLabel(cut)})`;
   document.getElementById('semaforo').innerHTML=
     semCard('Desviación','Verde &gt;0% (adelantado) · Amarillo 0% a −5% · Rojo &lt;−5%',devC)+
     semCard('Avance','Verde ≥80% · Amarillo 60–80% · Rojo &lt;60%',avC)+
-    semCard('Rentabilidad','Verde &gt;40% · Amarillo =40% · Rojo &lt;40%',rentC)+
-    semCard('Costos vs presupuesto','Verde bajo lo proyectado · Amarillo igual · Rojo por encima',costC);
+    semCard('Rentabilidad','Verde &gt;40% · Amarillo =40% · Rojo &lt;40%',rentC);
 
   // ── TABLA CERRADOS (en el grid2) ──
   document.getElementById('finProjNote').textContent=`(${closed.length})`;
@@ -389,7 +388,7 @@ function recompute(){
     {k:'est',t:'Estado',s:1,fmt:v=>`<span class="pill ${low(v)==='activo'?'act':(FINISHED.includes(low(v))?'cer':'oth')}">${esc(v)}</span>`},
     {k:'inicio',t:'Inicio',fmt:v=>`<span class="muted">${fmtDate(v)}</span>`},
     {k:'finPlan',t:'Fin Planificado',fmt:v=>`<span class="muted">${fmtDate(v)}</span>`},
-    {k:'finReal',t:'Fin Real',fmt:v=>`<span class="muted">${fmtDate(v)}</span>`},
+    {k:'finReal',t:'Fin Real',fmt:v=>`<span class="muted">${fmtDate(v)}</span>`},{k:'finDev',t:'Fin Desviación',fmt:v=>`<span class="muted">${fmtDate(v)}</span>`},
     {k:'av',t:'% Avance',n:1,fmt:v=>fmtPct(v)},{k:'dv',t:'% Desviación',n:1,fmt:v=>fmtPct(v)},
     {k:'dvAcum',t:'Desv. Acumulada',n:1,fmt:v=>fmtPct(v)},
     {k:'_semR',t:'Semáforo',n:1,fmt:(v,r)=>r._sem?`<span class="dot ${r._sem}"></span>${SEM_NAME[r._sem]}`:'—'}
@@ -498,4 +497,4 @@ const drop=document.getElementById('drop');
 drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
 </script>
 </body>
-  
+</html>
