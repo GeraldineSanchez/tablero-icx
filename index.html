@@ -493,7 +493,15 @@ function drawCombo(id,labels,bars,rentab,meta){clear(id);const ctx=document.getE
       y1:{position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:9},callback:v=>(v*100).toFixed(0)+'%'}}}}});}
 
 function drawBarStacked(id,labels,datasets){clear(id);const ctx=document.getElementById(id).getContext('2d');
-  charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
+  // plugin para mostrar el total encima de cada barra
+  const totalLabelsPlugin={id:'totalLabels',afterDatasetsDraw(chart){
+    const{ctx:c,data}=chart;
+    const totals=data.labels.map((_,i)=>data.datasets.reduce((s,ds)=>s+(ds.data[i]||0),0));
+    c.save();c.font='bold 11px system-ui';c.fillStyle='#0E2841';c.textAlign='center';c.textBaseline='bottom';
+    data.labels.forEach((_,i)=>{const meta=chart.getDatasetMeta(chart.data.datasets.length-1);
+      const bar=meta.data[i];if(bar)c.fillText(totals[i],bar.x,bar.y-4);});
+    c.restore();}};
+  charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets},plugins:[totalLabelsPlugin],options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{labels:{boxWidth:10,font:{size:10}}},
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw}}},
     scales:{x:{stacked:true,ticks:{font:{size:10},maxRotation:30}},y:{stacked:true,ticks:{font:{size:9}}}}}});}
