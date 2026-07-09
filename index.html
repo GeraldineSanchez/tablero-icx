@@ -147,7 +147,7 @@
 
     <!-- Grid: Proyectos por PM + Tabla de cerrados -->
     <div class="grid2" style="margin-top:24px">
-      <div class="panel"><h3>Proyectos por PM (activos vs cerrados)</h3><div class="chart-wrap"><canvas id="chPM"></canvas></div></div>
+      <div class="panel"><h3>Proyectos por PM y tipo</h3><div class="chart-wrap" style="height:320px"><canvas id="chPM"></canvas></div></div>
       <div class="panel" style="display:flex;flex-direction:column">
         <h3>Proyectos finalizados / cerrados <span id="finProjNote" style="font-size:11px;font-weight:500;color:var(--muted)"></span></h3>
         <input class="tbl-search" id="qFinal" placeholder="Filtrar proyecto…" style="margin-bottom:8px">
@@ -337,8 +337,8 @@ function recompute(){
   cardCmp(ok,'Número de proyectos',filt.length,prevRevRows.length||null,true,'accent');
   cardCmp(ok,'Activos',nAct,prevAct,true,'teal');
   cardCmp(ok,'Finalizados / Cerrados',closed.length,null,false);
-  cardCmp(ok,'Prom Avance',fmtPct(promAv),null,false,'',promAv,prevPromAv,'pct');
-  cardCmp(ok,'Prom Desviación',fmtPct(promDv),null,false,'',promDv,prevPromDv,'pct');
+  cardCmp(ok,'Prom Avance',fmtPct(promAv),null,true,'',promAv,prevPromAv,'pct');  // subir avance = bueno
+  cardCmp(ok,'Prom Desviación',fmtPct(promDv),null,true,'',promDv,prevPromDv,'pct'); // subir desviación = proyectos más adelantados = bueno
   // KPI extra: proyectos en rojo (desviación < -5%)
   const enRojo=filt.filter(p=>p.dv!=null&&p.dv<-0.05).length;
   const prevEnRojo=prevRevRows.filter(p=>p.dv!=null&&p.dv<-0.05).length;
@@ -374,12 +374,19 @@ function recompute(){
     {k:'dv',t:'Desviación',n:1,fmt:v=>fmtPct(v)},{k:'est',t:'Estado',s:1,fmt:v=>`<span class="pill cer">${esc(v)}</span>`}
   ],closed,'rev','desc');
 
-  // ── GRÁFICO POR PM ──
-  const pmMap={};
-  opBase.filter(p=>!excluded.has(p.name)&&low(p.est)==='activo').forEach(p=>{const k=p.pm||'—';(pmMap[k]=pmMap[k]||{act:0,cer:0}).act++;});
-  closed.forEach(p=>{const k=p.pm||'—';(pmMap[k]=pmMap[k]||{act:0,cer:0}).cer++;});
-  const pmN=Object.keys(pmMap).filter(k=>pmMap[k].act+pmMap[k].cer>0).sort((a,b)=>(pmMap[b].act+pmMap[b].cer)-(pmMap[a].act+pmMap[a].cer));
-  drawBar('chPM',pmN,[{label:'Activos',data:pmN.map(n=>pmMap[n].act),backgroundColor:COL.teal},{label:'Cerrados',data:pmN.map(n=>pmMap[n].cer),backgroundColor:COL.navy}]);
+  // ── GRÁFICO POR PM (apilado por tipo de proyecto) ──
+  const TIPO_COLORS=['#F2901D','#2E8B7F','#0E2841','#F4AB04','#7C5CBF','#D7503A','#5A9FD4','#8FBC8F'];
+  const tipoMap={};
+  opBase.filter(p=>!excluded.has(p.name)).forEach(p=>{
+    const k=p.pm||'—'; const t=norm(p.tipo)||'Sin tipo';
+    if(!tipoMap[k])tipoMap[k]={};
+    tipoMap[k][t]=(tipoMap[k][t]||0)+1;
+  });
+  const pmN=[...new Set(opBase.filter(p=>!excluded.has(p.name)).map(p=>p.pm||'—'))].filter(k=>tipoMap[k]);
+  pmN.sort((a,b)=>Object.values(tipoMap[b]||{}).reduce((s,v)=>s+v,0)-Object.values(tipoMap[a]||{}).reduce((s,v)=>s+v,0));
+  const allTipos=[...new Set(opBase.map(p=>norm(p.tipo)||'Sin tipo'))].sort();
+  const pmDatasets=allTipos.map((t,i)=>({label:t,data:pmN.map(n=>(tipoMap[n]||{})[t]||0),backgroundColor:TIPO_COLORS[i%TIPO_COLORS.length]}));
+  drawBarStacked('chPM',pmN,pmDatasets);
 
   // ── DESVIACIÓN ──
   document.getElementById('devNote').textContent=`(${filt.length} proyectos · clic en encabezado para ordenar)`;
@@ -484,6 +491,12 @@ function drawCombo(id,labels,bars,rentab,meta){clear(id);const ctx=document.getE
     plugins:{legend:{labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.yAxisID==='y1'?c.dataset.label+': '+fmtPct(c.raw):c.dataset.label+': '+fmtMoney(c.raw)}}},
     scales:{x:{ticks:{font:{size:9},maxRotation:65}},y:{position:'left',ticks:{font:{size:9},maxTicksLimit:7,callback:v=>fmtMoney(v)}},
       y1:{position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:9},callback:v=>(v*100).toFixed(0)+'%'}}}}});}
+
+function drawBarStacked(id,labels,datasets){clear(id);const ctx=document.getElementById(id).getContext('2d');
+  charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{boxWidth:10,font:{size:10}}},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw}}},
+    scales:{x:{stacked:true,ticks:{font:{size:10},maxRotation:30}},y:{stacked:true,ticks:{font:{size:9}}}}}});}
 
 function handleFile(file){const rd=new FileReader();rd.onload=e=>{try{
   const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});DATA=parseWB(wb);TBL={};semEstFilter=null;
