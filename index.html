@@ -191,6 +191,9 @@ const esc=s=>String(s==null?'':s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','
 function findCol(h,t){for(let i=0;i<h.length;i++)if(t(low(h[i]),h[i]))return i;return -1;}
 function toDate(v){if(v instanceof Date)return v;if(typeof v==='number')return new Date(Math.round((v-25569)*86400*1000));if(v==null||v==='')return null;const d=new Date(v);return isNaN(d)?null:d;}
 function toNum(v){if(v==null||v==='')return null;if(typeof v==='number')return Math.abs(v)>1.5?v/100:v;const x=parseFloat(String(v).replace(/[%\s]/g,'').replace(',','.'));if(isNaN(x))return null;return Math.abs(x)>1.5?x/100:x;}
+function toNumRaw(v){if(v==null||v==='')return null;if(typeof v==='number')return v;const x=parseFloat(String(v).replace(/[%\s]/g,'').replace(',','.'));return isNaN(x)?null:x;} // sin dividir entre 100
+function toDvAcum(v){// dvAcum: si abs<=10 es decimal (×100), si >10 ya es % directo
+  const x=toNumRaw(v);if(x==null)return null;if(Math.abs(x)>10)return x/100;return x;}
 function money(v){if(v==null||v==='')return 0;if(typeof v==='number')return v;let s=String(v).trim().replace(/[$\s]/g,'');
   if(s.includes(',')&&s.includes('.')){s=s.lastIndexOf(',')>s.lastIndexOf('.')?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');}
   else if(s.includes(',')){const d=s.split(',');s=(d.length===2&&d[1].length<=2)?s.replace(',','.'):s.replace(/,/g,'');}
@@ -222,7 +225,7 @@ function parseWB(wb){
     const rev=toDate(row[c.rev]);if(!isDate(rev)||rev.getFullYear()<2025)continue;
     const rec={name:p,rev:rev,pm:norm(row[c.pm]),est:norm(row[c.est]),tipo:norm(row[c.tipo]),
       inicio:toDate(row[c.inicio]),finPlan:toDate(row[c.finPlan]),finReal:toDate(row[c.finReal]),
-      av:toNum(row[c.av]),dv:toNum(row[c.dv]),dvAcum:toNum(row[c.dvAcum]),finDev:toDate(row[c.finDev]),goLive:toDate(row[c.goLive])};
+      av:toNum(row[c.av]),dv:toNum(row[c.dv]),dvAcum:toDvAcum(row[c.dvAcum]),finDev:toDate(row[c.finDev]),goLive:toDate(row[c.goLive])};
     flat.push(rec);(rows[p]=rows[p]||[]).push(rec);}
   function snap(recs){recs=recs.slice().sort((a,b)=>a.rev-b.rev);const last=recs[recs.length-1];
     const lne=k=>{for(let i=recs.length-1;i>=0;i--)if(norm(recs[i][k])!=='')return recs[i][k];return '';};
