@@ -248,7 +248,7 @@ function parseWB(wb){
     for(let r=1;r<cr.length;r++){const row=cr[r];if(!row)continue;const p=norm(row[f.proy]);if(!p)continue;
       const a=parseInt(row[f.anio]);if(isNaN(a)||a<2025||a>2026)continue;
       const mk=monthKey(toDate(row[f.mes]));if(!mk)continue;
-      const estFin=low(norm(row[f.est]));if(!['activo','finalizado'].includes(estFin))continue;
+      const estFin=low(norm(row[f.est]));if(!['activo','finalizado','cerrado'].includes(estFin))continue;
       fin.push({anio:a,mk:mk,proy:p,pm:norm(row[f.pm]),ing:money(row[f.ing]),cost:money(row[f.cost]),costProj:money(row[f.costProj]),
         fact:money(row[f.fact]),recau:money(row[f.recau]),pRec:money(row[f.pRec]),pFac:money(row[f.pFac]),pBH:money(row[f.pBH]),pPre:money(row[f.pPre])});}}
   return{rows:flat,projects,closed,fin,hasFin:fin.length>0,revDates};
@@ -406,12 +406,12 @@ function recompute(){
   const S=k=>fr.reduce((x,r)=>x+(r[k]||0),0);
   const msum=(mk,k)=>frAll.reduce((s,r)=>s+(r.mk===mk?(r[k]||0):0),0);
   const ventas=S('ing'),costos=S('cost'),gan=ventas-costos;
-  cardD(fk,'Total Ventas',fmtMoney(ventas),msum(cut,'ing'),msum(prevMK,'ing'),true,'accent');
-  cardD(fk,'Total Costos',fmtMoney(costos),msum(cut,'cost'),msum(prevMK,'cost'),false);
-  cardD(fk,'Ganancia',fmtMoney(gan),msum(cut,'ing')-msum(cut,'cost'),msum(prevMK,'ing')-msum(prevMK,'cost'),true,'teal');
-  cardRent(fk,ventas?gan/ventas:null,cut,prevMK,msum);
-  cardD(fk,'Total Facturado',fmtMoney(S('fact')),msum(cut,'fact'),msum(prevMK,'fact'),true);
-  cardD(fk,'Total Recaudado',fmtMoney(S('recau')),msum(cut,'recau'),msum(prevMK,'recau'),true);
+  card(fk,'Total Ventas',fmtMoney(ventas),'accent');
+  card(fk,'Total Costos',fmtMoney(costos));
+  card(fk,'Ganancia',fmtMoney(gan),'teal');
+  card(fk,'% Rentabilidad',fmtPct(ventas?gan/ventas:null));
+  card(fk,'Total Facturado',fmtMoney(S('fact')));
+  card(fk,'Total Recaudado',fmtMoney(S('recau')));
   card(fk,'Pend. por Facturar',fmtMoney(S('pFac')));card(fk,'Pend. por Recaudar',fmtMoney(S('pRec')));
   card(fk,'Pend. Ejecutar BH',fmtMoney(S('pBH')));card(fk,'Pend. Presupuesto',fmtMoney(S('pPre')));
   // KPI extra financiero: % Recaudo sobre facturado
