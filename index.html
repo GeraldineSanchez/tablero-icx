@@ -90,6 +90,28 @@
   .muted{color:var(--muted)}
   .foot{margin:34px 0 10px;color:var(--muted);font-size:12px;text-align:center;line-height:1.6}
   .hidden{display:none!important}
+  .tabs{display:flex;gap:4px;background:var(--navy);padding:0 24px;border-bottom:2px solid #1E3A5A}
+  .tab{padding:11px 20px;font-size:13px;font-weight:600;color:#9FB3C8;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s;white-space:nowrap}
+  .tab:hover{color:#fff}
+  .tab.active{color:#fff;border-bottom-color:var(--orange)}
+  .tab-content{display:none}.tab-content.active{display:block}
+  /* Comparador */
+  .cmp-header{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:20px;padding:20px 0 0}
+  .cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:700px){.cmp-grid{grid-template-columns:1fr}}
+  .cmp-col{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .cmp-col h3{margin:0 0 14px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .cmp-col h3 .dt{font-size:12px;font-weight:500;color:var(--muted)}
+  .cmp-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+  .cmp-kpis .card{padding:10px 12px}.cmp-kpis .card .val{font-size:16px}
+  .delta-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;margin-left:6px}
+  .delta-badge.g{background:#E4F1EE;color:#1F6B5E}.delta-badge.b{background:#FBE6E1;color:#A23522}.delta-badge.flat{background:#EEF2F6;color:#5A6B7B}
+  .cmp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+  .cmp-table th,.cmp-table td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left}
+  .cmp-table th{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700;background:#F7FAFC}
+  .cmp-table td.n{text-align:right;font-variant-numeric:tabular-nums}
+  .cmp-table tbody tr:hover{background:#F7FAFC}
+  .arrow-up{color:var(--good)}.arrow-dn{color:var(--bad)}.arrow-eq{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -99,7 +121,12 @@
   <button class="btn btn-ghost" onclick="document.getElementById('file').click()">Cambiar Excel</button>
   <input type="file" id="file" accept=".xlsx,.xls" class="hidden">
 </header>
+<div class="tabs" id="tabBar">
+  <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+  <div class="tab" onclick="switchTab('historial')">🕐 Historial de Comités</div>
+</div>
 <main>
+  <div class="tab-content active" id="tab-dashboard">
   <section id="empty" class="empty">
     <div class="logo">CX</div>
     <h2>Sube tu Excel de seguimiento</h2>
@@ -168,6 +195,18 @@
 
     <div class="foot">Tablero ICX · operativo por fecha de revisión · financiero acumulado al corte · valores en pesos completos · todo se calcula en tu navegador · para refrescar sube el archivo actualizado.</div>
   </section>
+  </div><!-- /tab-dashboard -->
+
+  <div class="tab-content" id="tab-historial">
+    <div class="cmp-header">
+      <div class="ctrl"><label>Comité A (fecha de revisión)</label><select id="cmpA"></select></div>
+      <div class="ctrl"><label>Comité B (fecha de revisión)</label><select id="cmpB"></select></div>
+      <div class="ctrl"><label>Project Manager</label><select id="cmpPM"></select></div>
+      <button class="btn btn-primary" style="align-self:flex-end" onclick="renderComite()">Comparar</button>
+    </div>
+    <div id="cmpResult"></div>
+  </div><!-- /tab-historial -->
+
 </main>
 
 <script>
@@ -283,7 +322,7 @@ function buildFilters(){
   document.querySelectorAll('.estChk').forEach(c=>c.addEventListener('change',recompute));
   ['qDev','qFin','qFinal'].forEach(id=>document.getElementById(id).addEventListener('input',e=>{
     const map={qDev:'tDev',qFin:'tFin',qFinal:'tFinal'};const t=TBL[map[id]];if(t){t.q=low(e.target.value);renderTable(map[id]);}}));
-  loadExcluded();buildProjList();
+  loadExcluded();buildProjList();buildComiteFilters();
 }
 
 function buildProjList(){
@@ -356,7 +395,7 @@ function recompute(){
   const fr=frAll.filter(r=>r.mk<=cut);
   const pj={};fr.forEach(r=>{(pj[r.proy]=pj[r.proy]||{proy:r.proy,ing:0,cost:0,costProj:0,fact:0,recau:0});
     pj[r.proy].ing+=r.ing;pj[r.proy].cost+=r.cost;pj[r.proy].costProj+=r.costProj;pj[r.proy].fact+=r.fact;pj[r.proy].recau+=r.recau;});
-  const pjArr=Object.values(pj).map(p=>({...p,rent:p.ing?(p.ing-p.cost)/p.ing:null})).sort((a,b)=>b.ing-a.ing);
+  const pjArr=Object.values(pj).map(p=>({...p,rent:p.ing?(p.ing-p.cost)/p.ing:null,gan:p.ing-p.cost})).sort((a,b)=>b.ing-a.ing);
   const rentC={v:0,a:0,r:0};
   pjArr.forEach(p=>{const rL=rentLight(p.rent);if(rL)rentC[rL]++;});
   const semLabel=semEstFilter?`· estado: ${semEstFilter}`:'';
@@ -434,7 +473,7 @@ function recompute(){
   buildTable('tFin',[
     {k:'proy',t:'Proyecto',s:1},{k:'ing',t:'Ingresos',n:1,fmt:v=>fmtMoney(v)},
     {k:'cost',t:'Costos',n:1,fmt:v=>fmtMoney(v)},
-    {k:'rent',t:'Rentab.',n:1,fmt:v=>{const L=rentLight(v);return(L?`<span class="dot ${L}"></span>`:'')+(v==null?'—':fmtPct(v));}},
+    {k:'rent',t:'Rentab.',n:1,fmt:v=>{const L=rentLight(v);return(L?`<span class="dot ${L}"></span>`:'')+(v==null?'—':fmtPct(v));}},{k:'gan',t:'Ganancia',n:1,fmt:v=>fmtMoney(v)},
     {k:'fact',t:'Facturado',n:1,fmt:v=>fmtMoney(v)},{k:'recau',t:'Recaudado',n:1,fmt:v=>fmtMoney(v)},
     {k:'_pctRec',t:'% Recaudo',n:1,fmt:v=>v==null?'—':fmtPct(v)}
   ],pjArr.map(p=>({...p,_pctRec:p.fact>0?p.recau/p.fact:null})),'ing','desc');
@@ -507,6 +546,164 @@ function drawBarStacked(id,labels,datasets){clear(id);const ctx=document.getElem
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw}}},
     scales:{x:{stacked:true,ticks:{font:{size:10},maxRotation:30}},
       y:{stacked:true,ticks:{font:{size:9}},grace:'15%'}}}});}
+
+// ── PESTAÑAS ──
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['dashboard','historial'][i]===name));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.toggle('active',t.id==='tab-'+name));
+}
+
+// ── COMPARADOR DE COMITÉS ──
+function buildComiteFilters(){
+  const revs=DATA.revDates.slice().reverse();
+  const pms=[...new Set([...DATA.projects.map(p=>p.pm),...DATA.fin.map(r=>r.pm)].filter(x=>x))].sort();
+  ['cmpA','cmpB'].forEach((id,i)=>{const s=document.getElementById(id);s.innerHTML='';
+    revs.forEach(d=>s.add(new Option(dmy(d),d)));if(revs.length>i)s.value=revs[i]||revs[0];});
+  const cp=document.getElementById('cmpPM');cp.innerHTML='';cp.add(new Option('Todos','Todos'));
+  pms.forEach(p=>cp.add(new Option(p,p)));
+}
+
+function getSnapForDate(revDate,pm){
+  const pmOk=v=>pm==='Todos'||v===pm;
+  const rows=revDate==='last'?DATA.projects:DATA.rows.filter(r=>fmtDate(r.rev)===revDate);
+  const filt=rows.filter(p=>pmOk(p.pm));
+  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  return{
+    date:revDate,rows:filt,
+    n:filt.length,
+    nAct:filt.filter(p=>low(p.est)==='activo').length,
+    nCer:DATA.closed.filter(p=>pmOk(p.pm)).length,
+    promAv:avg(filt.map(p=>p.av).filter(v=>v!=null)),
+    promDv:avg(filt.map(p=>p.dv).filter(v=>v!=null)),
+    enRojo:filt.filter(p=>p.dv!=null&&p.dv<-0.05).length,
+    retrasados:filt.filter(p=>p.dv!=null&&p.dv<0).length
+  };
+}
+
+function getFinForCut(cut,pm){
+  if(!DATA.hasFin)return null;
+  const pmOk=v=>pm==='Todos'||v===pm;
+  // Usar el mes correspondiente a la fecha de revisión elegida como corte
+  const mk=cut.slice(0,7); // yyyy-mm
+  const fr=DATA.fin.filter(r=>pmOk(r.pm)&&!excluded.has(r.proy)&&r.mk<=mk);
+  const S=k=>fr.reduce((x,r)=>x+(r[k]||0),0);
+  const pj={};fr.forEach(r=>{(pj[r.proy]=pj[r.proy]||{proy:r.proy,ing:0,cost:0,fact:0,recau:0});
+    pj[r.proy].ing+=r.ing;pj[r.proy].cost+=r.cost;pj[r.proy].fact+=r.fact;pj[r.proy].recau+=r.recau;});
+  const pjArr=Object.values(pj).map(p=>({...p,rent:p.ing?(p.ing-p.cost)/p.ing:null,gan:p.ing-p.cost})).sort((a,b)=>b.ing-a.ing);
+  const ventas=S('ing'),costos=S('cost'),gan=ventas-costos;
+  return{cut:mk,ventas,costos,gan,rentab:ventas?gan/ventas:null,fact:S('fact'),recau:S('recau'),pjArr};
+}
+
+function deltaBadge(a,b,goodUp,pct=false){
+  if(a==null||b==null)return'';
+  const diff=a-b,up=diff>=0,good=goodUp?up:!up;
+  if(Math.abs(diff)<0.0001)return`<span class="delta-badge flat">= sin cambio</span>`;
+  const disp=pct?`${up?'+':''}${(diff*100).toFixed(1)} pp`:`${up?'▲':'▼'} ${Math.abs(diff*100).toFixed(1)}%`;
+  return`<span class="delta-badge ${good?'g':'b'}">${disp}</span>`;}
+
+function renderComite(){
+  const dA=document.getElementById('cmpA').value;
+  const dB=document.getElementById('cmpB').value;
+  const pm=document.getElementById('cmpPM').value;
+  const sA=getSnapForDate(dA,pm), sB=getSnapForDate(dB,pm);
+  const fA=getFinForCut(dA,pm), fB=getFinForCut(dB,pm);
+
+  let html='';
+  // ── KPIs operativos ──
+  html+=`<div class="sec-title">KPIs Operativos</div><div class="cmp-grid">`;
+  html+=cmpOpCol(sA,'A',dA)+cmpOpCol(sB,'B',dB);
+  html+=`</div>`;
+
+  // ── Delta operativo ──
+  html+=`<div class="sec-title" style="margin-top:24px">Variación operativa (A → B)</div>`;
+  html+=`<div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto">`;
+  html+=`<table class="cmp-table"><thead><tr><th>Indicador</th><th class="n">Comité A (${dmy(dA)})</th><th class="n">Comité B (${dmy(dB)})</th><th class="n">Cambio</th></tr></thead><tbody>`;
+  const opRows=[
+    {l:'Nº Proyectos',a:sA.n,b:sB.n,up:true,fmt:v=>v},
+    {l:'Activos',a:sA.nAct,b:sB.nAct,up:true,fmt:v=>v},
+    {l:'Cerrados',a:sA.nCer,b:sB.nCer,up:false,fmt:v=>v},
+    {l:'Prom Avance',a:sA.promAv,b:sB.promAv,up:true,fmt:v=>fmtPct(v),pct:true},
+    {l:'Prom Desviación',a:sA.promDv,b:sB.promDv,up:true,fmt:v=>fmtPct(v),pct:true},
+    {l:'En rojo (desv.<−5%)',a:sA.enRojo,b:sB.enRojo,up:false,fmt:v=>v},
+    {l:'Retrasados (desv.<0)',a:sA.retrasados,b:sB.retrasados,up:false,fmt:v=>v}];
+  opRows.forEach(r=>{
+    const diff=r.b!=null&&r.a!=null?r.b-r.a:null;
+    const up=diff>0,good=r.up?up:!up;
+    const badge=diff==null?'':Math.abs(diff)<0.0001?`<span class="delta-badge flat">= sin cambio</span>`:
+      r.pct?`<span class="delta-badge ${good?'g':'b'}">${up?'+':''}${(diff*100).toFixed(1)} pp</span>`:
+      `<span class="delta-badge ${good?'g':'b'}">${up?'▲':'▼'} ${Math.abs(diff)}</span>`;
+    html+=`<tr><td>${r.l}</td><td class="n">${r.a!=null?r.fmt(r.a):'—'}</td><td class="n">${r.b!=null?r.fmt(r.b):'—'}</td><td class="n">${badge}</td></tr>`;});
+  html+=`</tbody></table></div>`;
+
+  // ── KPIs financieros ──
+  if(fA&&fB){
+    html+=`<div class="sec-title" style="margin-top:24px">KPIs Financieros</div>`;
+    html+=`<div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto">`;
+    html+=`<table class="cmp-table"><thead><tr><th>Indicador</th><th class="n">Comité A (hasta ${mkLabel(fA.cut)})</th><th class="n">Comité B (hasta ${mkLabel(fB.cut)})</th><th class="n">Cambio</th></tr></thead><tbody>`;
+    const finRows=[
+      {l:'Total Ventas',a:fA.ventas,b:fB.ventas,up:true,fmt:fmtMoney},
+      {l:'Total Costos',a:fA.costos,b:fB.costos,up:false,fmt:fmtMoney},
+      {l:'Ganancia',a:fA.gan,b:fB.gan,up:true,fmt:fmtMoney},
+      {l:'% Rentabilidad',a:fA.rentab,b:fB.rentab,up:true,fmt:fmtPct,pct:true},
+      {l:'Total Facturado',a:fA.fact,b:fB.fact,up:true,fmt:fmtMoney},
+      {l:'Total Recaudado',a:fA.recau,b:fB.recau,up:true,fmt:fmtMoney}];
+    finRows.forEach(r=>{
+      const diff=r.b!=null&&r.a!=null?r.b-r.a:null;
+      const up=diff>0,good=r.up?up:!up;
+      const badge=diff==null?'':Math.abs(diff)<0.01?`<span class="delta-badge flat">= sin cambio</span>`:
+        r.pct?`<span class="delta-badge ${good?'g':'b'}">${up?'+':''}${(diff*100).toFixed(1)} pp</span>`:
+        `<span class="delta-badge ${good?'g':'b'}">${up?'▲':'▼'} ${fmtMoney(Math.abs(diff))}</span>`;
+      html+=`<tr><td>${r.l}</td><td class="n">${r.fmt(r.a)}</td><td class="n">${r.fmt(r.b)}</td><td class="n">${badge}</td></tr>`;});
+    html+=`</tbody></table></div>`;
+
+    // ── Por proyecto ──
+    html+=`<div class="sec-title" style="margin-top:24px">Comparativo por proyecto</div>`;
+    html+=`<div style="overflow:auto;border:1px solid var(--line);border-radius:12px">`;
+    html+=`<table class="cmp-table"><thead><tr><th>Proyecto</th><th class="n">Ingresos A</th><th class="n">Ingresos B</th><th class="n">Δ Ingresos</th><th class="n">Rentab. A</th><th class="n">Rentab. B</th><th class="n">Δ Rentab.</th><th class="n">Ganancia A</th><th class="n">Ganancia B</th></tr></thead><tbody>`;
+    const allP=[...new Set([...fA.pjArr.map(p=>p.proy),...fB.pjArr.map(p=>p.proy)])].sort();
+    allP.forEach(p=>{
+      const a=fA.pjArr.find(x=>x.proy===p)||{ing:0,cost:0,rent:null,gan:0,fact:0,recau:0};
+      const b=fB.pjArr.find(x=>x.proy===p)||{ing:0,cost:0,rent:null,gan:0,fact:0,recau:0};
+      const dIng=b.ing-a.ing, dR=b.rent!=null&&a.rent!=null?b.rent-a.rent:null;
+      const bIng=dIng===0?`<span class="delta-badge flat">= sin cambio</span>`:
+        `<span class="delta-badge ${dIng>0?'g':'b'}">${dIng>0?'▲':'▼'} ${fmtMoney(Math.abs(dIng))}</span>`;
+      const bR=dR==null?'—':Math.abs(dR)<0.001?`<span class="delta-badge flat">= sin cambio</span>`:
+        `<span class="delta-badge ${dR>0?'g':'b'}">${dR>0?'+':''}${(dR*100).toFixed(1)} pp</span>`;
+      html+=`<tr><td><b>${esc(p)}</b></td><td class="n">${fmtMoney(a.ing)}</td><td class="n">${fmtMoney(b.ing)}</td><td class="n">${bIng}</td><td class="n">${a.rent!=null?fmtPct(a.rent):'—'}</td><td class="n">${b.rent!=null?fmtPct(b.rent):'—'}</td><td class="n">${bR}</td><td class="n">${fmtMoney(a.gan)}</td><td class="n">${fmtMoney(b.gan)}</td></tr>`;});
+    html+=`</tbody></table></div>`;
+  }
+
+  // ── Tabla proyecto a proyecto operativo ──
+  html+=`<div class="sec-title" style="margin-top:24px">Avance y desviación por proyecto (A vs B)</div>`;
+  html+=`<div style="overflow:auto;border:1px solid var(--line);border-radius:12px">`;
+  html+=`<table class="cmp-table"><thead><tr><th>Proyecto</th><th>PM</th><th class="n">Avance A</th><th class="n">Avance B</th><th class="n">Δ Avance</th><th class="n">Desv. A</th><th class="n">Desv. B</th><th class="n">Δ Desv.</th><th>Estado B</th></tr></thead><tbody>`;
+  const allOp=[...new Set([...sA.rows.map(p=>p.name),...sB.rows.map(p=>p.name)])].sort();
+  allOp.forEach(name=>{
+    const a=sA.rows.find(p=>p.name===name)||{av:null,dv:null,pm:'—',est:'—'};
+    const b=sB.rows.find(p=>p.name===name)||{av:null,dv:null,pm:'—',est:'—'};
+    const dAv=a.av!=null&&b.av!=null?b.av-a.av:null;
+    const dDv=a.dv!=null&&b.dv!=null?b.dv-a.dv:null;
+    const bAv=dAv==null?'—':Math.abs(dAv)<0.001?`<span class="delta-badge flat">= sin cambio</span>`:
+      `<span class="delta-badge ${dAv>0?'g':'b'}">${dAv>0?'+':''}${(dAv*100).toFixed(1)} pp</span>`;
+    const bDv=dDv==null?'—':Math.abs(dDv)<0.001?`<span class="delta-badge flat">= sin cambio</span>`:
+      `<span class="delta-badge ${dDv>0?'g':'b'}">${dDv>0?'+':''}${(dDv*100).toFixed(1)} pp</span>`;
+    const cls=low(b.est)==='activo'?'act':(FINISHED.includes(low(b.est))?'cer':'oth');
+    html+=`<tr><td><b>${esc(name)}</b></td><td>${esc(a.pm||b.pm)}</td><td class="n">${fmtPct(a.av)}</td><td class="n">${fmtPct(b.av)}</td><td class="n">${bAv}</td><td class="n">${fmtPct(a.dv)}</td><td class="n">${fmtPct(b.dv)}</td><td class="n">${bDv}</td><td><span class="pill ${cls}">${esc(b.est)}</span></td></tr>`;});
+  html+=`</tbody></table></div>`;
+
+  document.getElementById('cmpResult').innerHTML=html;
+}
+
+function cmpOpCol(s,lbl,date){
+  return`<div class="cmp-col"><h3>Comité ${lbl} <span class="dt">${dmy(date)}</span></h3><div class="cmp-kpis">
+    <div class="card accent"><div class="lbl">Nº Proyectos</div><div class="val">${s.n}</div></div>
+    <div class="card teal"><div class="lbl">Activos</div><div class="val">${s.nAct}</div></div>
+    <div class="card"><div class="lbl">Cerrados</div><div class="val">${s.nCer}</div></div>
+    <div class="card"><div class="lbl">Prom Avance</div><div class="val">${fmtPct(s.promAv)}</div></div>
+    <div class="card"><div class="lbl">Prom Desviación</div><div class="val">${fmtPct(s.promDv)}</div></div>
+    <div class="card"><div class="lbl">En rojo</div><div class="val">${s.enRojo}</div></div>
+  </div></div>`;
+}
 
 function handleFile(file){const rd=new FileReader();rd.onload=e=>{try{
   const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});DATA=parseWB(wb);TBL={};semEstFilter=null;
