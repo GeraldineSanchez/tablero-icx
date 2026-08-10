@@ -143,6 +143,7 @@
       <div class="ctrl"><label>Mes de corte (acumulado · financiero)</label><select id="fCut"></select></div>
       <div class="ctrl"><label>Project Manager</label><div class="est-box" id="pmBox"></div></div>
       <div class="ctrl"><label>Fecha de revisión (operativo)</label><select id="fRev"></select></div>
+      <div class="ctrl"><label>Próximos a cerrar (días)</label><select id="fDays"><option value="30">30 días</option><option value="60" selected>60 días</option><option value="90">90 días</option><option value="180">180 días</option></select></div>
       <div class="ctrl"><label>Estado (operativo)</label><div class="est-box" id="estBox"></div></div>
     </div>
 
@@ -165,6 +166,8 @@
     <div class="kpis" id="opKpis"></div>
 
     <!-- Semáforo -->
+    <div class="sec-title">Proyectos próximos a cerrar <span class="sub" id="closeNote"></span></div>
+    <div class="tbl-scroll"><table id="tClose"></table></div>
     <div class="sec-title">Semáforo general <span class="sub" id="semNote"></span></div>
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px">
       <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Filtrar por estado:</span>
@@ -199,12 +202,25 @@
 
   <div class="tab-content" id="tab-historial">
     <div class="cmp-header">
-      <div class="ctrl"><label>Comité A (fecha de revisión)</label><select id="cmpA"></select></div>
-      <div class="ctrl"><label>Comité B (fecha de revisión)</label><select id="cmpB"></select></div>
+      <div class="ctrl"><label>Comité A · fecha de revisión</label><select id="cmpA"></select></div>
+      <div class="ctrl"><label>Comité A · mes de corte financiero</label><select id="cmpCutA"></select></div>
+      <div class="ctrl"><label>Comité B · fecha de revisión</label><select id="cmpB"></select></div>
+      <div class="ctrl"><label>Comité B · mes de corte financiero</label><select id="cmpCutB"></select></div>
       <div class="ctrl"><label>Project Manager</label><select id="cmpPM"></select></div>
       <button class="btn btn-primary" style="align-self:flex-end" onclick="renderComite()">Comparar</button>
     </div>
-    <div id="cmpResult"></div>
+    <details class="proj-panel" id="cmpProjPanel" style="margin-bottom:16px">
+      <summary>Proyectos financieros: incluir / excluir <span id="cmpExclCount"></span></summary>
+      <div class="proj-tools">
+        <input id="cmpProjSearch" placeholder="Buscar proyecto…">
+        <button onclick="setCmpAllProj(true)">Incluir todos</button>
+        <button onclick="setCmpAllProj(false)">Excluir todos</button>
+      </div>
+      <div class="proj-list" id="cmpProjList"></div>
+    </details>
+    <div style="display:none">
+    </div>
+    </div><div id="cmpResult"></div>
   </div><!-- /tab-historial -->
 
 </main>
@@ -286,13 +302,18 @@ function parseWB(wb){
       fact:findCol(h2,h=>h.includes('facturado')),recau:findCol(h2,h=>h.includes('recaudado')),
       pRec:findCol(h2,h=>h.includes('pendiente')&&h.includes('recaud')),pFac:findCol(h2,h=>h.includes('pendiente')&&h.includes('factur')),
       pBH:findCol(h2,h=>h.includes('pendiente')&&(h.includes('bh')||h.includes('bolsa'))),pPre:findCol(h2,h=>h.includes('pendiente')&&h.includes('presup')),
+      gan:findCol(h2,h=>h==='ganancia'),
+      rent:findCol(h2,h=>h==='rentabilidad'&&!h.includes('comercial')),
       est:findCol(h2,h=>h==='estado')};
     for(let r=1;r<cr.length;r++){const row=cr[r];if(!row)continue;const p=norm(row[f.proy]);if(!p)continue;
       const a=parseInt(row[f.anio]);if(isNaN(a)||a<2025||a>2026)continue;
       const mk=monthKey(toDate(row[f.mes]));if(!mk)continue;
       const estFin=low(norm(row[f.est]));if(!['activo','finalizado','cerrado'].includes(estFin))continue;
+      const ganRaw=row[f.gan]!=null?money(row[f.gan]):null;
+      const rentRaw=row[f.rent]!=null&&row[f.rent]!=='#DIV/0!'?toNum(row[f.rent]):null;
       fin.push({anio:a,mk:mk,proy:p,pm:norm(row[f.pm]),ing:money(row[f.ing]),cost:money(row[f.cost]),costProj:money(row[f.costProj]),
-        fact:money(row[f.fact]),recau:money(row[f.recau]),pRec:money(row[f.pRec]),pFac:money(row[f.pFac]),pBH:money(row[f.pBH]),pPre:money(row[f.pPre])});}}
+        fact:money(row[f.fact]),recau:money(row[f.recau]),pRec:money(row[f.pRec]),pFac:money(row[f.pFac]),pBH:money(row[f.pBH]),pPre:money(row[f.pPre]),
+        ganDirect:ganRaw,rentDirect:rentRaw});}}
   return{rows:flat,projects,closed,fin,hasFin:fin.length>0,revDates};
 }
 
@@ -318,7 +339,7 @@ function buildFilters(){
   sef.insertAdjacentHTML('beforeend',`<label><input type="radio" name="semEst" value="__todos__" checked> Todos</label>`);
   ests.forEach(e=>sef.insertAdjacentHTML('beforeend',`<label><input type="radio" name="semEst" value="${low(e)}"> ${esc(e)}</label>`));
   sef.querySelectorAll('input[name="semEst"]').forEach(r=>r.addEventListener('change',e=>{semEstFilter=e.target.value==='__todos__'?null:e.target.value;recompute();}));
-  ['fCut','fRev'].forEach(id=>document.getElementById(id).addEventListener('change',recompute));
+  ['fCut','fRev','fDays'].forEach(id=>document.getElementById(id).addEventListener('change',recompute));
   document.querySelectorAll('.estChk').forEach(c=>c.addEventListener('change',recompute));
   ['qDev','qFin','qFinal'].forEach(id=>document.getElementById(id).addEventListener('input',e=>{
     const map={qDev:'tDev',qFin:'tFin',qFinal:'tFinal'};const t=TBL[map[id]];if(t){t.q=low(e.target.value);renderTable(map[id]);}}));
@@ -388,6 +409,32 @@ function recompute(){
 
   // ── SEMÁFORO con filtro de estado ──
   const semBase=semEstFilter?filt.filter(p=>low(p.est)===semEstFilter):filt;
+  // ── PRÓXIMOS A CERRAR ──
+  const days=parseInt(document.getElementById('fDays').value)||60;
+  const now=new Date(); now.setHours(0,0,0,0);
+  const future=new Date(now); future.setDate(future.getDate()+days);
+  // Tomar datos de TODOS los proyectos (última revisión) filtrados por PM, activos, con finPlan próxima
+  const allSnap=selRev==='last'?DATA.projects:DATA.rows.filter(r=>fmtDate(r.rev)===selRev);
+  const closing=allSnap.filter(p=>pmOk(p.pm)&&low(p.est)==='activo'&&isDate(p.finReal)&&p.finReal>=now&&p.finReal<=future&&!excluded.has(p.name))
+    .sort((a,b)=>a.finReal-b.finReal);
+  document.getElementById('closeNote').textContent=`(${closing.length} proyectos activos con Fin Planificado en los próximos ${days} días)`;
+  buildTable('tClose',[
+    {k:'name',t:'Proyecto',s:1,fmt:v=>`<b>${esc(v)}</b>`},
+    {k:'pm',t:'PM',s:1},
+    {k:'cliente',t:'Cliente',s:1},
+    {k:'tipo',t:'Tipo',s:1,fmt:v=>`<span class="muted">${esc(v)}</span>`},
+    {k:'finPlan',t:'Fin Planificado',fmt:v=>`<span class="muted">${fmtDate(v)}</span>`},
+    {k:'finReal',t:'Fin Real',fmt:v=>{
+      const ms=v-now,d=Math.round(ms/86400000);
+      const color=d<=14?'var(--bad)':d<=30?'#F4AB04':'var(--good)';
+      return`<span style="color:${color};font-weight:700">${fmtDate(v)}</span> <span class="muted">(${d}d)</span>`;
+    }},
+    {k:'goLive',t:'Go Live',fmt:v=>`<span class="muted">${fmtDate(v)}</span>`},
+    {k:'av',t:'% Avance',n:1,fmt:v=>fmtPct(v)},
+    {k:'dv',t:'% Desviación',n:1,fmt:v=>fmtPct(v)},
+    {k:'est',t:'Estado',s:1,fmt:v=>`<span class="pill act">${esc(v)}</span>`}
+  ],closing,'finPlan','asc');
+
   const devC={v:0,a:0,r:0},avC={v:0,a:0,r:0};
   semBase.forEach(p=>{const L=devLight(p.dv);if(L)devC[L]++;});
   semBase.forEach(p=>{const L=avLight(p.av);if(L)avC[L]++;});
@@ -447,11 +494,14 @@ function recompute(){
   fnNote.textContent=`(acumulado a ${mkLabel(cut)}${pmLabel!=='Todos'?' · PM: '+pmLabel:''})`;
   const S=k=>fr.reduce((x,r)=>x+(r[k]||0),0);
   const msum=(mk,k)=>frAll.reduce((s,r)=>s+(r.mk===mk?(r[k]||0):0),0);
-  const ventas=S('ing'),costos=S('cost'),gan=ventas-costos;
+  const ventas=S('ing'),costos=S('cost');
+  // Todos acumulados hasta el corte (fr = todos los meses <= cut)
+  const ganAcum=fr.reduce((s,r)=>s+(r.ganDirect!=null?r.ganDirect:0),0); // suma Ganancia de la hoja
+  const rentAcum=ventas>0?ganAcum/ventas:null; // Rentabilidad = Ganancia acum / Ventas acum
   card(fk,'Total Ventas',fmtMoney(ventas),'accent');
   card(fk,'Total Costos',fmtMoney(costos));
-  card(fk,'Ganancia',fmtMoney(gan),'teal');
-  card(fk,'% Rentabilidad',fmtPct(ventas?gan/ventas:null));
+  card(fk,'Ganancia',fmtMoney(ganAcum),'teal');
+  card(fk,'% Rentabilidad',fmtPct(rentAcum));
   card(fk,'Total Facturado',fmtMoney(S('fact')));
   card(fk,'Total Recaudado',fmtMoney(S('recau')));
   card(fk,'Pend. por Facturar',fmtMoney(S('pFac')));card(fk,'Pend. por Recaudar',fmtMoney(S('pRec')));
@@ -547,6 +597,23 @@ function drawBarStacked(id,labels,datasets){clear(id);const ctx=document.getElem
     scales:{x:{stacked:true,ticks:{font:{size:10},maxRotation:30}},
       y:{stacked:true,ticks:{font:{size:9}},grace:'15%'}}}});}
 
+let cmpExcluded=new Set();
+
+function buildCmpProjList(){
+  const projs=[...new Set(DATA.fin.map(r=>r.proy))].sort((a,b)=>a.localeCompare(b,'es'));
+  const box=document.getElementById('cmpProjList');
+  box.innerHTML=projs.map(n=>`<label data-name="${esc(n)}" class="${cmpExcluded.has(n)?'excl':''}"><input type="checkbox" class="cmpProjChk" value="${esc(n)}" ${cmpExcluded.has(n)?'':'checked'}><span>${esc(n)}</span></label>`).join('');
+  box.querySelectorAll('.cmpProjChk').forEach(c=>c.addEventListener('change',()=>{
+    if(c.checked)cmpExcluded.delete(c.value);else cmpExcluded.add(c.value);
+    c.closest('label').classList.toggle('excl',!c.checked);updateCmpExcl();}));
+  document.getElementById('cmpProjSearch').oninput=e=>{const q=low(e.target.value);
+    document.querySelectorAll('#cmpProjList label').forEach(l=>{l.style.display=low(l.dataset.name).includes(q)?'':'none';});};
+  updateCmpExcl();
+}
+function updateCmpExcl(){const n=cmpExcluded.size;document.getElementById('cmpExclCount').innerHTML=n?`<span class="badge">${n} excluido${n>1?'s':''}</span>`:'';}
+function setCmpAllProj(inc){if(inc)cmpExcluded.clear();else document.querySelectorAll('.cmpProjChk').forEach(c=>cmpExcluded.add(c.value));
+  document.querySelectorAll('.cmpProjChk').forEach(c=>{c.checked=inc;c.closest('label').classList.toggle('excl',!inc);});updateCmpExcl();}
+
 // ── PESTAÑAS ──
 function switchTab(name){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['dashboard','historial'][i]===name));
@@ -559,14 +626,19 @@ function buildComiteFilters(){
   const pms=[...new Set([...DATA.projects.map(p=>p.pm),...DATA.fin.map(r=>r.pm)].filter(x=>x))].sort();
   ['cmpA','cmpB'].forEach((id,i)=>{const s=document.getElementById(id);s.innerHTML='';
     revs.forEach(d=>s.add(new Option(dmy(d),d)));if(revs.length>i)s.value=revs[i]||revs[0];});
+  const mks=[...new Set(DATA.fin.map(r=>r.mk))].filter(Boolean).sort().reverse();
+  ['cmpCutA','cmpCutB'].forEach((id,i)=>{const s=document.getElementById(id);s.innerHTML='';
+    mks.forEach(m=>s.add(new Option(mkLabel(m),m)));if(mks.length>i)s.value=mks[i]||mks[0];});
   const cp=document.getElementById('cmpPM');cp.innerHTML='';cp.add(new Option('Todos','Todos'));
   pms.forEach(p=>cp.add(new Option(p,p)));
+  buildCmpProjList();
 }
 
-function getSnapForDate(revDate,pm){
+function getSnapForDate(revDate,pm,exclSet=null){
   const pmOk=v=>pm==='Todos'||v===pm;
+  const excl=exclSet||new Set();
   const rows=revDate==='last'?DATA.projects:DATA.rows.filter(r=>fmtDate(r.rev)===revDate);
-  const filt=rows.filter(p=>pmOk(p.pm));
+  const filt=rows.filter(p=>pmOk(p.pm)&&!excl.has(p.name));
   const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
   return{
     date:revDate,rows:filt,
@@ -580,12 +652,12 @@ function getSnapForDate(revDate,pm){
   };
 }
 
-function getFinForCut(cut,pm){
+function getFinForCut(cut,pm,exclSet=null){
   if(!DATA.hasFin)return null;
   const pmOk=v=>pm==='Todos'||v===pm;
-  // Usar el mes correspondiente a la fecha de revisión elegida como corte
-  const mk=cut.slice(0,7); // yyyy-mm
-  const fr=DATA.fin.filter(r=>pmOk(r.pm)&&!excluded.has(r.proy)&&r.mk<=mk);
+  const excl=exclSet||new Set();
+  const mk=cut.length===7?cut:cut.slice(0,7); // ya viene yyyy-mm desde cmpCutA/B
+  const fr=DATA.fin.filter(r=>pmOk(r.pm)&&!excl.has(r.proy)&&r.mk<=mk);
   const S=k=>fr.reduce((x,r)=>x+(r[k]||0),0);
   const pj={};fr.forEach(r=>{(pj[r.proy]=pj[r.proy]||{proy:r.proy,ing:0,cost:0,fact:0,recau:0});
     pj[r.proy].ing+=r.ing;pj[r.proy].cost+=r.cost;pj[r.proy].fact+=r.fact;pj[r.proy].recau+=r.recau;});
@@ -604,94 +676,123 @@ function deltaBadge(a,b,goodUp,pct=false){
 function renderComite(){
   const dA=document.getElementById('cmpA').value;
   const dB=document.getElementById('cmpB').value;
+  const cutA=document.getElementById('cmpCutA').value;
+  const cutB=document.getElementById('cmpCutB').value;
   const pm=document.getElementById('cmpPM').value;
-  const sA=getSnapForDate(dA,pm), sB=getSnapForDate(dB,pm);
-  const fA=getFinForCut(dA,pm), fB=getFinForCut(dB,pm);
+  const sA=getSnapForDate(dA,pm,cmpExcluded), sB=getSnapForDate(dB,pm,cmpExcluded);
+  const fA=getFinForCut(cutA,pm,cmpExcluded), fB=getFinForCut(cutB,pm,cmpExcluded);
 
-  let html='';
-  // ── KPIs operativos ──
-  html+=`<div class="sec-title">KPIs Operativos</div><div class="cmp-grid">`;
-  html+=cmpOpCol(sA,'A',dA)+cmpOpCol(sB,'B',dB);
-  html+=`</div>`;
-
-  // ── Delta operativo ──
-  html+=`<div class="sec-title" style="margin-top:24px">Variación operativa (A → B)</div>`;
-  html+=`<div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto">`;
-  html+=`<table class="cmp-table"><thead><tr><th>Indicador</th><th class="n">Comité A (${dmy(dA)})</th><th class="n">Comité B (${dmy(dB)})</th><th class="n">Cambio</th></tr></thead><tbody>`;
-  const opRows=[
-    {l:'Nº Proyectos',a:sA.n,b:sB.n,up:true,fmt:v=>v},
-    {l:'Activos',a:sA.nAct,b:sB.nAct,up:true,fmt:v=>v},
-    {l:'Cerrados',a:sA.nCer,b:sB.nCer,up:false,fmt:v=>v},
-    {l:'Prom Avance',a:sA.promAv,b:sB.promAv,up:true,fmt:v=>fmtPct(v),pct:true},
-    {l:'Prom Desviación',a:sA.promDv,b:sB.promDv,up:true,fmt:v=>fmtPct(v),pct:true},
-    {l:'En rojo (desv.<−5%)',a:sA.enRojo,b:sB.enRojo,up:false,fmt:v=>v},
-    {l:'Retrasados (desv.<0)',a:sA.retrasados,b:sB.retrasados,up:false,fmt:v=>v}];
-  opRows.forEach(r=>{
-    const diff=r.b!=null&&r.a!=null?r.b-r.a:null;
-    const up=diff>0,good=r.up?up:!up;
-    const badge=diff==null?'':Math.abs(diff)<0.0001?`<span class="delta-badge flat">= sin cambio</span>`:
-      r.pct?`<span class="delta-badge ${good?'g':'b'}">${up?'+':''}${(diff*100).toFixed(1)} pp</span>`:
-      `<span class="delta-badge ${good?'g':'b'}">${up?'▲':'▼'} ${Math.abs(diff)}</span>`;
-    html+=`<tr><td>${r.l}</td><td class="n">${r.a!=null?r.fmt(r.a):'—'}</td><td class="n">${r.b!=null?r.fmt(r.b):'—'}</td><td class="n">${badge}</td></tr>`;});
-  html+=`</tbody></table></div>`;
-
-  // ── KPIs financieros ──
+  // Montar estructura HTML con IDs para las tablas
+  let out='';
+  out+=`<div class="sec-title">KPIs Operativos</div><div class="cmp-grid">${cmpOpCol(sA,'A',dA)}${cmpOpCol(sB,'B',dB)}</div>`;
+  out+=`<div class="sec-title" style="margin-top:24px">Variación operativa (A → B)</div>`;
+  out+=`<input class="tbl-search" id="qCmpOp" placeholder="Filtrar indicador…" style="margin-bottom:8px">`;
+  out+=`<div class="tbl-scroll"><table id="tCmpOp"></table></div>`;
   if(fA&&fB){
-    html+=`<div class="sec-title" style="margin-top:24px">KPIs Financieros</div>`;
-    html+=`<div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto">`;
-    html+=`<table class="cmp-table"><thead><tr><th>Indicador</th><th class="n">Comité A (hasta ${mkLabel(fA.cut)})</th><th class="n">Comité B (hasta ${mkLabel(fB.cut)})</th><th class="n">Cambio</th></tr></thead><tbody>`;
-    const finRows=[
-      {l:'Total Ventas',a:fA.ventas,b:fB.ventas,up:true,fmt:fmtMoney},
-      {l:'Total Costos',a:fA.costos,b:fB.costos,up:false,fmt:fmtMoney},
-      {l:'Ganancia',a:fA.gan,b:fB.gan,up:true,fmt:fmtMoney},
-      {l:'% Rentabilidad',a:fA.rentab,b:fB.rentab,up:true,fmt:fmtPct,pct:true},
-      {l:'Total Facturado',a:fA.fact,b:fB.fact,up:true,fmt:fmtMoney},
-      {l:'Total Recaudado',a:fA.recau,b:fB.recau,up:true,fmt:fmtMoney}];
-    finRows.forEach(r=>{
-      const diff=r.b!=null&&r.a!=null?r.b-r.a:null;
-      const up=diff>0,good=r.up?up:!up;
-      const badge=diff==null?'':Math.abs(diff)<0.01?`<span class="delta-badge flat">= sin cambio</span>`:
-        r.pct?`<span class="delta-badge ${good?'g':'b'}">${up?'+':''}${(diff*100).toFixed(1)} pp</span>`:
-        `<span class="delta-badge ${good?'g':'b'}">${up?'▲':'▼'} ${fmtMoney(Math.abs(diff))}</span>`;
-      html+=`<tr><td>${r.l}</td><td class="n">${r.fmt(r.a)}</td><td class="n">${r.fmt(r.b)}</td><td class="n">${badge}</td></tr>`;});
-    html+=`</tbody></table></div>`;
+    out+=`<div class="sec-title" style="margin-top:24px">KPIs Financieros</div>`;
+    out+=`<input class="tbl-search" id="qCmpFin" placeholder="Filtrar indicador…" style="margin-bottom:8px">`;
+    out+=`<div class="tbl-scroll"><table id="tCmpFin"></table></div>`;
+    out+=`<div class="sec-title" style="margin-top:24px">Comparativo financiero por proyecto</div>`;
+    out+=`<input class="tbl-search" id="qCmpFinP" placeholder="Filtrar proyecto…" style="margin-bottom:8px">`;
+    out+=`<div class="tbl-scroll"><table id="tCmpFinP"></table></div>`;
+  }
+  out+=`<div class="sec-title" style="margin-top:24px">Avance y desviación por proyecto (A vs B)</div>`;
+  out+=`<input class="tbl-search" id="qCmpOpP" placeholder="Filtrar proyecto…" style="margin-bottom:8px">`;
+  out+=`<div class="tbl-scroll"><table id="tCmpOpP"></table></div>`;
+  document.getElementById('cmpResult').innerHTML=out;
 
-    // ── Por proyecto ──
-    html+=`<div class="sec-title" style="margin-top:24px">Comparativo por proyecto</div>`;
-    html+=`<div style="overflow:auto;border:1px solid var(--line);border-radius:12px">`;
-    html+=`<table class="cmp-table"><thead><tr><th>Proyecto</th><th class="n">Ingresos A</th><th class="n">Ingresos B</th><th class="n">Δ Ingresos</th><th class="n">Rentab. A</th><th class="n">Rentab. B</th><th class="n">Δ Rentab.</th><th class="n">Ganancia A</th><th class="n">Ganancia B</th></tr></thead><tbody>`;
+  // Listeners de buscador
+  [['qCmpOp','tCmpOp'],['qCmpFin','tCmpFin'],['qCmpFinP','tCmpFinP'],['qCmpOpP','tCmpOpP']].forEach(([qi,ti])=>{
+    const el=document.getElementById(qi); if(!el)return;
+    el.addEventListener('input',e=>{const t=TBL[ti];if(t){t.q=low(e.target.value);renderTable(ti);}});});
+
+  // ── Tabla variación operativa ──
+  const opRows=[
+    {ind:'Nº Proyectos',a:sA.n,b:sB.n,goodUp:true},
+    {ind:'Activos',a:sA.nAct,b:sB.nAct,goodUp:true},
+    {ind:'Cerrados',a:sA.nCer,b:sB.nCer,goodUp:false},
+    {ind:'Prom Avance',a:sA.promAv,b:sB.promAv,goodUp:true,pct:true,fmt:fmtPct},
+    {ind:'Prom Desviación',a:sA.promDv,b:sB.promDv,goodUp:true,pct:true,fmt:fmtPct},
+    {ind:'En rojo (desv.<−5%)',a:sA.enRojo,b:sB.enRojo,goodUp:false},
+    {ind:'Retrasados (desv.<0)',a:sA.retrasados,b:sB.retrasados,goodUp:false}
+  ].map(r=>{
+    const diff=r.b!=null&&r.a!=null?r.b-r.a:null;
+    const up=diff>0,good=r.goodUp?up:!up;
+    const delta=diff==null?'—':Math.abs(diff)<0.0001?'Sin cambio':
+      r.pct?`${up?'+':''}${(diff*100).toFixed(1)} pp`:`${up?'▲':'▼'} ${Math.abs(diff)}`;
+    return{ind:r.ind,valA:r.fmt?r.fmt(r.a):String(r.a??'—'),valB:r.fmt?r.fmt(r.b):String(r.b??'—'),
+      delta,_diff:diff??0,_good:diff==null?null:good};});
+  buildTable('tCmpOp',[
+    {k:'ind',t:'Indicador',s:1},
+    {k:'valA',t:`Comité A (${dmy(dA)})`,s:1},
+    {k:'valB',t:`Comité B (${dmy(dB)})`,s:1},
+    {k:'delta',t:'Cambio',s:1,fmt:(v,r)=>r._good==null?`<span class="delta-badge flat">${v}</span>`:
+      `<span class="delta-badge ${r._good?'g':'b'}">${v}</span>`}
+  ],opRows,'ind','asc');
+
+  if(fA&&fB){
+    // ── Tabla variación financiera ──
+    const finRows=[
+      {ind:'Total Ventas',a:fA.ventas,b:fB.ventas,goodUp:true,fmt:fmtMoney},
+      {ind:'Total Costos',a:fA.costos,b:fB.costos,goodUp:false,fmt:fmtMoney},
+      {ind:'Ganancia',a:fA.gan,b:fB.gan,goodUp:true,fmt:fmtMoney},
+      {ind:'% Rentabilidad',a:fA.rentab,b:fB.rentab,goodUp:true,pct:true,fmt:fmtPct},
+      {ind:'Total Facturado',a:fA.fact,b:fB.fact,goodUp:true,fmt:fmtMoney},
+      {ind:'Total Recaudado',a:fA.recau,b:fB.recau,goodUp:true,fmt:fmtMoney}
+    ].map(r=>{
+      const diff=r.b!=null&&r.a!=null?r.b-r.a:null;
+      const up=diff>0,good=r.goodUp?up:!up;
+      const delta=diff==null?'—':Math.abs(diff)<0.01?'Sin cambio':
+        r.pct?`${up?'+':''}${(diff*100).toFixed(1)} pp`:`${up?'▲':'▼'} ${fmtMoney(Math.abs(diff))}`;
+      return{ind:r.ind,valA:r.fmt(r.a),valB:r.fmt(r.b),delta,_diff:diff??0,_good:diff==null?null:good};});
+    buildTable('tCmpFin',[
+      {k:'ind',t:'Indicador',s:1},
+      {k:'valA',t:`Comité A · hasta ${mkLabel(fA.cut)}`,s:1},
+      {k:'valB',t:`Comité B · hasta ${mkLabel(fB.cut)}`,s:1},
+      {k:'delta',t:'Cambio',s:1,fmt:(v,r)=>r._good==null?`<span class="delta-badge flat">${v}</span>`:
+        `<span class="delta-badge ${r._good?'g':'b'}">${v}</span>`}
+    ],finRows,'ind','asc');
+
+    // ── Tabla financiera por proyecto ──
     const allP=[...new Set([...fA.pjArr.map(p=>p.proy),...fB.pjArr.map(p=>p.proy)])].sort();
-    allP.forEach(p=>{
+    const finPRows=allP.map(p=>{
       const a=fA.pjArr.find(x=>x.proy===p)||{ing:0,cost:0,rent:null,gan:0,fact:0,recau:0};
       const b=fB.pjArr.find(x=>x.proy===p)||{ing:0,cost:0,rent:null,gan:0,fact:0,recau:0};
-      const dIng=b.ing-a.ing, dR=b.rent!=null&&a.rent!=null?b.rent-a.rent:null;
-      const bIng=dIng===0?`<span class="delta-badge flat">= sin cambio</span>`:
-        `<span class="delta-badge ${dIng>0?'g':'b'}">${dIng>0?'▲':'▼'} ${fmtMoney(Math.abs(dIng))}</span>`;
-      const bR=dR==null?'—':Math.abs(dR)<0.001?`<span class="delta-badge flat">= sin cambio</span>`:
-        `<span class="delta-badge ${dR>0?'g':'b'}">${dR>0?'+':''}${(dR*100).toFixed(1)} pp</span>`;
-      html+=`<tr><td><b>${esc(p)}</b></td><td class="n">${fmtMoney(a.ing)}</td><td class="n">${fmtMoney(b.ing)}</td><td class="n">${bIng}</td><td class="n">${a.rent!=null?fmtPct(a.rent):'—'}</td><td class="n">${b.rent!=null?fmtPct(b.rent):'—'}</td><td class="n">${bR}</td><td class="n">${fmtMoney(a.gan)}</td><td class="n">${fmtMoney(b.gan)}</td></tr>`;});
-    html+=`</tbody></table></div>`;
+      return{proy:p,ingA:a.ing,ingB:b.ing,dIng:b.ing-a.ing,
+        rentA:a.rent,rentB:b.rent,dRent:a.rent!=null&&b.rent!=null?b.rent-a.rent:null,
+        ganA:a.gan,ganB:b.gan,dGan:b.gan-a.gan};});
+    buildTable('tCmpFinP',[
+      {k:'proy',t:'Proyecto',s:1},
+      {k:'ingA',t:'Ingresos A',n:1,fmt:v=>fmtMoney(v)},
+      {k:'ingB',t:'Ingresos B',n:1,fmt:v=>fmtMoney(v)},
+      {k:'dIng',t:'Δ Ingresos',n:1,fmt:(v,r)=>`<span class="delta-badge ${v>0?'g':v<0?'b':'flat'}">${v>0?'▲':'▼'} ${fmtMoney(Math.abs(v))}</span>`},
+      {k:'rentA',t:'Rentab. A',n:1,fmt:v=>v==null?'—':fmtPct(v)},
+      {k:'rentB',t:'Rentab. B',n:1,fmt:v=>v==null?'—':fmtPct(v)},
+      {k:'dRent',t:'Δ Rentab.',n:1,fmt:v=>v==null?'—':`<span class="delta-badge ${v>0?'g':v<0?'b':'flat'}">${v>0?'+':''}${(v*100).toFixed(1)} pp</span>`},
+      {k:'ganA',t:'Ganancia A',n:1,fmt:v=>fmtMoney(v)},
+      {k:'ganB',t:'Ganancia B',n:1,fmt:v=>fmtMoney(v)},
+      {k:'dGan',t:'Δ Ganancia',n:1,fmt:(v)=>`<span class="delta-badge ${v>0?'g':v<0?'b':'flat'}">${v>0?'▲':'▼'} ${fmtMoney(Math.abs(v))}</span>`}
+    ],finPRows,'ingB','desc');
   }
 
-  // ── Tabla proyecto a proyecto operativo ──
-  html+=`<div class="sec-title" style="margin-top:24px">Avance y desviación por proyecto (A vs B)</div>`;
-  html+=`<div style="overflow:auto;border:1px solid var(--line);border-radius:12px">`;
-  html+=`<table class="cmp-table"><thead><tr><th>Proyecto</th><th>PM</th><th class="n">Avance A</th><th class="n">Avance B</th><th class="n">Δ Avance</th><th class="n">Desv. A</th><th class="n">Desv. B</th><th class="n">Δ Desv.</th><th>Estado B</th></tr></thead><tbody>`;
+  // ── Tabla operativa por proyecto ──
   const allOp=[...new Set([...sA.rows.map(p=>p.name),...sB.rows.map(p=>p.name)])].sort();
-  allOp.forEach(name=>{
+  const opPRows=allOp.map(name=>{
     const a=sA.rows.find(p=>p.name===name)||{av:null,dv:null,pm:'—',est:'—'};
     const b=sB.rows.find(p=>p.name===name)||{av:null,dv:null,pm:'—',est:'—'};
-    const dAv=a.av!=null&&b.av!=null?b.av-a.av:null;
-    const dDv=a.dv!=null&&b.dv!=null?b.dv-a.dv:null;
-    const bAv=dAv==null?'—':Math.abs(dAv)<0.001?`<span class="delta-badge flat">= sin cambio</span>`:
-      `<span class="delta-badge ${dAv>0?'g':'b'}">${dAv>0?'+':''}${(dAv*100).toFixed(1)} pp</span>`;
-    const bDv=dDv==null?'—':Math.abs(dDv)<0.001?`<span class="delta-badge flat">= sin cambio</span>`:
-      `<span class="delta-badge ${dDv>0?'g':'b'}">${dDv>0?'+':''}${(dDv*100).toFixed(1)} pp</span>`;
-    const cls=low(b.est)==='activo'?'act':(FINISHED.includes(low(b.est))?'cer':'oth');
-    html+=`<tr><td><b>${esc(name)}</b></td><td>${esc(a.pm||b.pm)}</td><td class="n">${fmtPct(a.av)}</td><td class="n">${fmtPct(b.av)}</td><td class="n">${bAv}</td><td class="n">${fmtPct(a.dv)}</td><td class="n">${fmtPct(b.dv)}</td><td class="n">${bDv}</td><td><span class="pill ${cls}">${esc(b.est)}</span></td></tr>`;});
-  html+=`</tbody></table></div>`;
-
-  document.getElementById('cmpResult').innerHTML=html;
+    return{name,pm:a.pm||b.pm,avA:a.av,avB:b.av,dAv:a.av!=null&&b.av!=null?b.av-a.av:null,
+      dvA:a.dv,dvB:b.dv,dDv:a.dv!=null&&b.dv!=null?b.dv-a.dv:null,estB:b.est};});
+  buildTable('tCmpOpP',[
+    {k:'name',t:'Proyecto',s:1,fmt:v=>`<b>${esc(v)}</b>`},
+    {k:'pm',t:'PM',s:1},
+    {k:'avA',t:'Avance A',n:1,fmt:v=>fmtPct(v)},
+    {k:'avB',t:'Avance B',n:1,fmt:v=>fmtPct(v)},
+    {k:'dAv',t:'Δ Avance',n:1,fmt:v=>v==null?'—':`<span class="delta-badge ${v>0?'g':v<0?'b':'flat'}">${v>0?'+':''}${(v*100).toFixed(1)} pp</span>`},
+    {k:'dvA',t:'Desv. A',n:1,fmt:v=>fmtPct(v)},
+    {k:'dvB',t:'Desv. B',n:1,fmt:v=>fmtPct(v)},
+    {k:'dDv',t:'Δ Desv.',n:1,fmt:v=>v==null?'—':`<span class="delta-badge ${v>0?'g':v<0?'b':'flat'}">${v>0?'+':''}${(v*100).toFixed(1)} pp</span>`},
+    {k:'estB',t:'Estado B',s:1,fmt:v=>`<span class="pill ${low(v)==='activo'?'act':(FINISHED.includes(low(v))?'cer':'oth')}">${esc(v)}</span>`}
+  ],opPRows,'name','asc');
 }
 
 function cmpOpCol(s,lbl,date){
