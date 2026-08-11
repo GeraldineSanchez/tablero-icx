@@ -308,7 +308,7 @@ function parseWB(wb){
     for(let r=1;r<cr.length;r++){const row=cr[r];if(!row)continue;const p=norm(row[f.proy]);if(!p)continue;
       const a=parseInt(row[f.anio]);if(isNaN(a)||a<2025||a>2026)continue;
       const mk=monthKey(toDate(row[f.mes]));if(!mk)continue;
-      const estFin=low(norm(row[f.est]));if(!['activo','finalizado','cerrado'].includes(estFin))continue;
+      const estFin=low(norm(row[f.est]));if(!['activo','finalizado','cerrado','inactivo'].includes(estFin))continue;
       const ganRaw=row[f.gan]!=null?money(row[f.gan]):null;
       const rentRaw=row[f.rent]!=null&&row[f.rent]!=='#DIV/0!'?toNum(row[f.rent]):null;
       fin.push({anio:a,mk:mk,proy:p,pm:norm(row[f.pm]),ing:money(row[f.ing]),cost:money(row[f.cost]),costProj:money(row[f.costProj]),
